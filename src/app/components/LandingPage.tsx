@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
+import StitchDivider from "./ui/StitchDivider";
 
 export default function LandingPage() {
   return (
@@ -155,6 +156,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <div className="max-w-[1200px] mx-auto px-12">
+        <StitchDivider />
+      </div>
 
       {/* How It Works Section */}
       <section className="py-[120px] px-12 bg-[#FFE0CC]">
