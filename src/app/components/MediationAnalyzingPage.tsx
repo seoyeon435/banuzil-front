@@ -38,20 +38,20 @@ export default function MediationAnalyzingPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#2C1810] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#1F1410] flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Animated Background Glow */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-96 h-96 rounded-full bg-[#FF8C7A]/10 blur-3xl animate-pulse" />
+        <div className="w-96 h-96 rounded-full bg-[#FF6347]/10 blur-3xl animate-pulse" />
       </div>
 
       {/* Center Animation */}
       <div className="relative z-10 mb-12">
         <div className="relative flex items-center justify-center">
           {/* Outer Glow */}
-          <div className="absolute w-48 h-48 rounded-full bg-[#FF8C7A]/20 blur-xl animate-pulse" />
+          <div className="absolute w-48 h-48 rounded-full bg-[#FF6347]/20 blur-xl animate-pulse" />
 
           {/* Middle Glow */}
-          <div className="absolute w-32 h-32 rounded-full bg-[#FF8C7A]/40 animate-ping" style={{ animationDuration: '2s' }} />
+          <div className="absolute w-32 h-32 rounded-full bg-[#FF6347]/40 animate-ping" style={{ animationDuration: '2s' }} />
 
           {/* Icon */}
           <div className="relative text-8xl z-10">🧵</div>
@@ -85,7 +85,7 @@ export default function MediationAnalyzingPage() {
       <div className="w-full max-w-md">
         <div className="h-2 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[#FF8C7A] to-[#E56B58] rounded-full transition-all duration-300"
+            className="h-full bg-gradient-to-r from-[#FF6347] to-[#E84028] rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

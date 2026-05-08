@@ -19,24 +19,24 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
   return (
     <div className="min-h-screen bg-[#FFF8F4] flex">
       {/* Left Sidebar */}
-      <aside className="w-[280px] bg-white border-r border-[#EDD9CC] fixed h-screen flex flex-col">
+      <aside className="w-[280px] bg-white border-r border-[#F0DFD0] fixed h-screen flex flex-col">
         {/* Logo/Home Link */}
-        <Link to="/" className="p-6 border-b border-[#EDD9CC] hover:bg-[#FFF8F4] transition-colors">
+        <Link to="/" className="p-6 border-b border-[#F0DFD0] hover:bg-[#FFF8F4] transition-colors">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🧵</span>
-            <span className="text-xl font-bold text-[#2C1810]">바느질</span>
+            <span className="text-xl font-bold text-[#1F1410]">바느질</span>
           </div>
         </Link>
 
         {/* User Profile Section */}
-        <div className="p-6 border-b border-[#EDD9CC]">
+        <div className="p-6 border-b border-[#F0DFD0]">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF8C7A] to-[#E56B58] flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-xl font-bold">
               박
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[#2C1810]">박서연</h3>
-              <span className="inline-block px-3 py-1 bg-[#FF8C7A]/10 text-[#FF8C7A] text-xs rounded-full mt-1">
+              <h3 className="text-lg font-semibold text-[#1F1410]">박서연</h3>
+              <span className="inline-block px-3 py-1 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full mt-1">
                 ENFP
               </span>
             </div>
@@ -54,8 +54,8 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
                 className={`
                   flex items-center gap-3 px-6 py-3 mb-1 transition-all
                   ${isActive
-                    ? 'bg-[#FF8C7A]/5 border-l-4 border-[#FF8C7A] text-[#FF8C7A]'
-                    : 'text-[#8C6B5A] hover:bg-[#F5E6D8] hover:text-[#2C1810]'
+                    ? 'bg-[#FF6347]/5 border-l-4 border-[#FF6347] text-[#FF6347]'
+                    : 'text-[#7A5C4D] hover:bg-[#FFE0CC] hover:text-[#1F1410]'
                   }
                 `}
               >
@@ -67,8 +67,8 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         </nav>
 
         {/* Logout Button */}
-        <div className="p-6 border-t border-[#EDD9CC]">
-          <button className="flex items-center gap-2 text-[#8C6B5A] hover:text-[#E57373] transition-colors">
+        <div className="p-6 border-t border-[#F0DFD0]">
+          <button className="flex items-center gap-2 text-[#7A5C4D] hover:text-[#DC3545] transition-colors">
             <LogOut className="w-4 h-4" />
             <span className="text-sm">로그아웃</span>
           </button>

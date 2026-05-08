@@ -81,7 +81,7 @@ export default function AttachmentSurveyPage() {
   return (
     <div className="min-h-screen bg-[#FFF8F4] flex">
       {/* Left Panel */}
-      <div className="w-[420px] bg-gradient-to-br from-[#FF8C7A] to-[#E56B58] p-8 flex flex-col text-white">
+      <div className="w-[420px] bg-gradient-to-br from-[#FF6347] to-[#E84028] p-8 flex flex-col text-white">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-6">
             <span className="text-3xl">🧵</span>
@@ -157,14 +157,14 @@ export default function AttachmentSurveyPage() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-[32px] font-semibold text-[#2C1810]">
+              <h1 className="text-[32px] font-semibold text-[#1F1410]">
                 불안 척도 검사
               </h1>
-              <span className="text-sm text-[#8C6B5A]">
+              <span className="text-sm text-[#7A5C4D]">
                 {currentPage + 1} / {totalPages} 페이지
               </span>
             </div>
-            <p className="text-[#8C6B5A] leading-relaxed">
+            <p className="text-[#7A5C4D] leading-relaxed">
               각 문항을 읽고 평소 대인관계에서 자신이 느끼는 정도를 솔직하게 선택해주세요.
             </p>
           </div>
@@ -174,17 +174,17 @@ export default function AttachmentSurveyPage() {
             {currentQuestions.map((question, index) => (
               <div
                 key={question.id}
-                className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,140,122,0.12)]"
+                className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)]"
               >
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-[#FF8C7A]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-[#FF8C7A]">
+                  <div className="w-8 h-8 rounded-full bg-[#FF6347]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-[#FF6347]">
                       {currentPage * questionsPerPage + index + 1}
                     </span>
                   </div>
-                  <p className="text-[#2C1810] leading-relaxed flex-1">
+                  <p className="text-[#1F1410] leading-relaxed flex-1">
                     {question.text}
-                    {question.reverse && <span className="text-[#8C6B5A] text-sm ml-2">(역문항)</span>}
+                    {question.reverse && <span className="text-[#7A5C4D] text-sm ml-2">(역문항)</span>}
                   </p>
                 </div>
 
@@ -197,16 +197,16 @@ export default function AttachmentSurveyPage() {
                       className={`
                         w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all
                         ${answers[question.id] === value
-                          ? 'border-[#FF8C7A] bg-[#FF8C7A]/5'
-                          : 'border-[#EDD9CC] hover:border-[#FF8C7A]/50 hover:bg-[#FFF8F4]'
+                          ? 'border-[#FF6347] bg-[#FF6347]/5'
+                          : 'border-[#F0DFD0] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]'
                         }
                       `}
                     >
                       <div className={`
                         w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
                         ${answers[question.id] === value
-                          ? 'border-[#FF8C7A] bg-[#FF8C7A]'
-                          : 'border-[#EDD9CC]'
+                          ? 'border-[#FF6347] bg-[#FF6347]'
+                          : 'border-[#F0DFD0]'
                         }
                       `}>
                         {answers[question.id] === value && (
@@ -214,10 +214,10 @@ export default function AttachmentSurveyPage() {
                         )}
                       </div>
                       <div className="flex items-center justify-between flex-1">
-                        <span className={`text-sm ${answers[question.id] === value ? 'text-[#2C1810] font-medium' : 'text-[#8C6B5A]'}`}>
+                        <span className={`text-sm ${answers[question.id] === value ? 'text-[#1F1410] font-medium' : 'text-[#7A5C4D]'}`}>
                           {scaleLabels[value - 1]}
                         </span>
-                        <span className={`text-sm font-semibold ${answers[question.id] === value ? 'text-[#FF8C7A]' : 'text-[#8C6B5A]'}`}>
+                        <span className={`text-sm font-semibold ${answers[question.id] === value ? 'text-[#FF6347]' : 'text-[#7A5C4D]'}`}>
                           {value}
                         </span>
                       </div>
@@ -233,7 +233,7 @@ export default function AttachmentSurveyPage() {
             {currentPage > 0 ? (
               <button
                 onClick={handlePrevious}
-                className="px-8 py-3 border-2 border-[#EDD9CC] text-[#8C6B5A] rounded-full hover:bg-[#F5E6D8] transition-all flex items-center gap-2"
+                className="px-8 py-3 border-2 border-[#F0DFD0] text-[#7A5C4D] rounded-full hover:bg-[#FFE0CC] transition-all flex items-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />
                 이전
@@ -241,7 +241,7 @@ export default function AttachmentSurveyPage() {
             ) : (
               <Link
                 to="/signup"
-                className="px-8 py-3 border-2 border-[#EDD9CC] text-[#8C6B5A] rounded-full hover:bg-[#F5E6D8] transition-all flex items-center gap-2"
+                className="px-8 py-3 border-2 border-[#F0DFD0] text-[#7A5C4D] rounded-full hover:bg-[#FFE0CC] transition-all flex items-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />
                 기본정보로
@@ -253,8 +253,8 @@ export default function AttachmentSurveyPage() {
               className={`
                 flex-1 py-3 rounded-full font-medium transition-all flex items-center justify-center gap-2
                 ${isPageComplete()
-                  ? 'bg-[#FF8C7A] text-white hover:bg-[#E56B58] shadow-[0_4px_16px_rgba(255,140,122,0.2)]'
-                  : 'bg-[#EDD9CC] text-[#8C6B5A] cursor-not-allowed'
+                  ? 'bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)]'
+                  : 'bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed'
                 }
               `}
             >
@@ -264,7 +264,7 @@ export default function AttachmentSurveyPage() {
           </div>
 
           {/* Help Text */}
-          <p className="text-center text-sm text-[#8C6B5A] mt-6">
+          <p className="text-center text-sm text-[#7A5C4D] mt-6">
             현재 페이지의 모든 문항에 답변해주세요
           </p>
         </div>

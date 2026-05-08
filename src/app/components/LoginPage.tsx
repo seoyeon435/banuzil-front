@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Decorative */}
-      <div className="w-1/2 bg-gradient-to-br from-[#FF8C7A] to-[#E56B58] flex flex-col items-center justify-center text-white relative overflow-hidden">
+      <div className="w-1/2 bg-gradient-to-br from-[#FF6347] to-[#E84028] flex flex-col items-center justify-center text-white relative overflow-hidden">
         {/* Decorative Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -69,10 +69,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* Header */}
           <div className="mb-10">
-            <h1 className="text-[28px] font-bold text-[#2C1810] mb-2">로그인</h1>
-            <p className="text-[#8C6B5A]">
+            <h1 className="text-[28px] font-bold text-[#1F1410] mb-2">로그인</h1>
+            <p className="text-[#7A5C4D]">
               계정이 없으신가요?{" "}
-              <Link to="/signup" className="text-[#FF8C7A] underline hover:text-[#E56B58]">
+              <Link to="/signup" className="text-[#FF6347] underline hover:text-[#E84028]">
                 회원가입
               </Link>
             </p>
@@ -82,35 +82,35 @@ export default function LoginPage() {
           <form className="space-y-4">
             {/* Email Input */}
             <div>
-              <label className="block text-sm font-medium text-[#2C1810] mb-2">
+              <label className="block text-sm font-medium text-[#1F1410] mb-2">
                 이메일
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8C6B5A]" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
                   type="email"
                   placeholder="이메일 주소를 입력해주세요"
-                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#EDD9CC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF8C7A] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-medium text-[#2C1810] mb-2">
+              <label className="block text-sm font-medium text-[#1F1410] mb-2">
                 비밀번호
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8C6B5A]" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="비밀번호를 입력해주세요"
-                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#EDD9CC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF8C7A] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C6B5A] hover:text-[#2C1810]"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A5C4D] hover:text-[#1F1410]"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -119,7 +119,7 @@ export default function LoginPage() {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <a href="#" className="text-sm text-[#8C6B5A] hover:text-[#FF8C7A]">
+              <a href="#" className="text-sm text-[#7A5C4D] hover:text-[#FF6347]">
                 비밀번호를 잊으셨나요?
               </a>
             </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full h-[52px] bg-[#FF8C7A] text-white rounded-full hover:bg-[#E56B58] transition-all shadow-[0_4px_16px_rgba(255,140,122,0.2)] hover:shadow-[0_6px_20px_rgba(255,140,122,0.3)]"
+              className="w-full h-[52px] bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)]"
             >
               로그인
             </button>
@@ -135,9 +135,9 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-[1px] bg-[#EDD9CC]" />
-            <span className="text-sm text-[#8C6B5A]">또는</span>
-            <div className="flex-1 h-[1px] bg-[#EDD9CC]" />
+            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
+            <span className="text-sm text-[#7A5C4D]">또는</span>
+            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
           </div>
 
           {/* Social Login */}
@@ -146,28 +146,28 @@ export default function LoginPage() {
               <span>🟡</span>
               카카오로 계속하기
             </button>
-            <button className="w-full h-[48px] border-2 border-[#EDD9CC] bg-white text-[#2C1810] rounded-xl hover:bg-[#F5E6D8] transition-all flex items-center justify-center gap-2">
+            <button className="w-full h-[48px] border-2 border-[#F0DFD0] bg-white text-[#1F1410] rounded-xl hover:bg-[#FFE0CC] transition-all flex items-center justify-center gap-2">
               <span>⬜</span>
               구글로 계속하기
             </button>
           </div>
 
           {/* Terms */}
-          <p className="text-xs text-[#8C6B5A] text-center mt-8">
+          <p className="text-xs text-[#7A5C4D] text-center mt-8">
             로그인하면 이용약관 및 개인정보처리방침에
             <br />
             동의하는 것으로 간주됩니다
           </p>
 
           {/* Test Account Button */}
-          <div className="mt-8 pt-8 border-t border-[#EDD9CC]">
+          <div className="mt-8 pt-8 border-t border-[#F0DFD0]">
             <Link
               to="/mediation/start"
-              className="block w-full py-3 bg-[#F5E6D8] text-[#2C1810] rounded-full hover:bg-[#EDD9CC] transition-all text-center font-medium"
+              className="block w-full py-3 bg-[#FFE0CC] text-[#1F1410] rounded-full hover:bg-[#F0DFD0] transition-all text-center font-medium"
             >
               🧪 테스트 계정으로 바로 입장하기
             </Link>
-            <p className="text-xs text-[#8C6B5A] text-center mt-2">
+            <p className="text-xs text-[#7A5C4D] text-center mt-2">
               개발 테스트용 • 중재 시작 화면으로 이동
             </p>
           </div>
