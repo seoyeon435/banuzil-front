@@ -1,0 +1,105 @@
+import MyPageLayout from "./MyPageLayout";
+import { Bell, Lock, Shield, Trash2 } from "lucide-react";
+
+export default function SettingsPage() {
+  return (
+    <MyPageLayout>
+      <div className="max-w-[800px]">
+        <h1 className="text-[36px] font-semibold text-[#2C1810] mb-8">설정</h1>
+
+        {/* Notification Settings */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,140,122,0.12)] mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Bell className="w-6 h-6 text-[#FF8C7A]" />
+            <h2 className="text-xl font-semibold text-[#2C1810]">알림 설정</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-[#2C1810] font-medium">친구 신청 알림</p>
+                <p className="text-sm text-[#8C6B5A]">새로운 친구 신청이 왔을 때 알림을 받아요</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-[#EDD9CC] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF8C7A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF8C7A]"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-t border-[#EDD9CC]">
+              <div>
+                <p className="text-[#2C1810] font-medium">갈등 중재 완료 알림</p>
+                <p className="text-sm text-[#8C6B5A]">중재가 완료되면 알림을 받아요</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-[#EDD9CC] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF8C7A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF8C7A]"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-t border-[#EDD9CC]">
+              <div>
+                <p className="text-[#2C1810] font-medium">마케팅 알림</p>
+                <p className="text-sm text-[#8C6B5A]">이벤트 및 새로운 기능 소식을 받아요</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-[#EDD9CC] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF8C7A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF8C7A]"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Security Settings */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,140,122,0.12)] mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Lock className="w-6 h-6 text-[#FF8C7A]" />
+            <h2 className="text-xl font-semibold text-[#2C1810]">보안 설정</h2>
+          </div>
+
+          <div className="space-y-4">
+            <button className="w-full text-left py-3 hover:text-[#FF8C7A] transition-colors">
+              <p className="text-[#2C1810] font-medium">비밀번호 변경</p>
+              <p className="text-sm text-[#8C6B5A]">계정 비밀번호를 변경할 수 있어요</p>
+            </button>
+
+            <button className="w-full text-left py-3 border-t border-[#EDD9CC] hover:text-[#FF8C7A] transition-colors">
+              <p className="text-[#2C1810] font-medium">이메일 변경</p>
+              <p className="text-sm text-[#8C6B5A]">로그인에 사용하는 이메일을 변경할 수 있어요</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Privacy Settings */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,140,122,0.12)] mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Shield className="w-6 h-6 text-[#FF8C7A]" />
+            <h2 className="text-xl font-semibold text-[#2C1810]">개인정보 설정</h2>
+          </div>
+
+          <div className="space-y-4">
+            <button className="w-full text-left py-3 hover:text-[#FF8C7A] transition-colors">
+              <p className="text-[#2C1810] font-medium">개인정보 다운로드</p>
+              <p className="text-sm text-[#8C6B5A]">내 모든 데이터를 다운로드할 수 있어요</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,140,122,0.12)] border-2 border-[#FFE6E6]">
+          <div className="flex items-center gap-3 mb-6">
+            <Trash2 className="w-6 h-6 text-[#E57373]" />
+            <h2 className="text-xl font-semibold text-[#E57373]">위험 영역</h2>
+          </div>
+
+          <button className="w-full text-left py-3 hover:opacity-80 transition-opacity">
+            <p className="text-[#E57373] font-medium">계정 삭제</p>
+            <p className="text-sm text-[#8C6B5A]">
+              계정과 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </p>
+          </button>
+        </div>
+      </div>
+    </MyPageLayout>
+  );
+}
