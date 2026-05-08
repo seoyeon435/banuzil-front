@@ -36,7 +36,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-72px)] flex items-center justify-center bg-gradient-to-b from-[#FFF8F4] to-[#FFE9DD] overflow-hidden">
+      <section className="relative min-h-[calc(100vh-72px)] flex items-center justify-center bg-[#FFE9DD] overflow-hidden">
         {/* Decorative Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -74,7 +74,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-center gap-4 mb-8">
             <Link
               to="/mediation/start"
-              className="px-10 py-4 h-[56px] min-w-[220px] bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.25)] flex items-center justify-center gap-2"
+              className="px-10 py-4 h-[56px] min-w-[220px] bg-[#FF6347] text-white font-bold rounded-full hover:bg-[#E84028] transition-all shadow-[0_8px_32px_rgba(255,99,71,0.25)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.32)] flex items-center justify-center gap-2"
             >
               갈등 중재 시작하기 <span>→</span>
             </Link>
@@ -97,6 +97,10 @@ export default function LandingPage() {
           <ChevronDown className="w-6 h-6 text-[#7A5C4D]" />
         </div>
       </section>
+
+      <div className="max-w-[1200px] mx-auto px-12">
+        <StitchDivider />
+      </div>
 
       {/* Features Section */}
       <section id="features" className="py-[120px] px-12">
