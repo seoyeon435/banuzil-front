@@ -110,7 +110,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-3 gap-6">
             {/* Card 1 */}
-            <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all">
+            <div className="group bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all border-l border-l-[#FF6347] hover:border-l-4 duration-300">
               <div className="w-16 h-16 rounded-full bg-[#FF6347]/10 flex items-center justify-center text-3xl mb-6">
                 🫂
               </div>
@@ -125,7 +125,7 @@ export default function LandingPage() {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all">
+            <div className="group bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all border-l border-l-[#FF6347] hover:border-l-4 duration-300">
               <div className="w-16 h-16 rounded-full bg-[#FF6347]/10 flex items-center justify-center text-3xl mb-6">
                 🔍
               </div>
@@ -140,7 +140,7 @@ export default function LandingPage() {
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all">
+            <div className="group bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all border-l border-l-[#FF6347] hover:border-l-4 duration-300">
               <div className="w-16 h-16 rounded-full bg-[#FF6347]/10 flex items-center justify-center text-3xl mb-6">
                 📋
               </div>
