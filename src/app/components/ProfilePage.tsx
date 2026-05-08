@@ -1,4 +1,5 @@
 import MyPageLayout from "./MyPageLayout";
+import StitchDivider from "./ui/StitchDivider";
 
 export default function ProfilePage() {
   return (
@@ -25,10 +26,12 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <StitchDivider className="my-2" />
+
         {/* MBTI and Attachment Type Cards */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 mt-6">
           {/* MBTI Card */}
-          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)]">
+          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-l border-l-[#FF6347] hover:border-l-4 transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-[#1F1410]">나의 MBTI</h3>
               <button className="px-4 py-1.5 text-sm border border-[#FF6347] text-[#FF6347] rounded-lg hover:bg-[#FF6347]/5 transition-all">
@@ -81,7 +84,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Attachment Type Card */}
-          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)]">
+          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-l border-l-[#FF6347] hover:border-l-4 transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-[#1F1410]">나의 애착유형</h3>
               <button className="px-4 py-1.5 text-sm border border-[#5A9F7C] text-[#5A9F7C] rounded-lg hover:bg-[#5A9F7C]/5 transition-all">

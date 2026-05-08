@@ -60,10 +60,10 @@ export default function MediationStartPage() {
                 key={friend.id}
                 onClick={() => setSelectedFriend(friend.id)}
                 className={`
-                  relative bg-white rounded-xl p-6 transition-all
+                  relative bg-white rounded-xl p-6 transition-all duration-300
                   ${isSelected
                     ? 'border-2 border-[#FF6347] bg-[#FF6347]/5'
-                    : 'border-2 border-transparent hover:border-[#FF6347]/50'
+                    : 'border border-transparent border-l border-l-[#FF6347] hover:border-l-4'
                   }
                 `}
               >

@@ -1,6 +1,7 @@
 import MyPageLayout from "./MyPageLayout";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import StitchDivider from "./ui/StitchDivider";
 
 const records = [
   {
@@ -122,6 +123,8 @@ export default function RecordsPage() {
           </div>
         </div>
 
+        <StitchDivider className="mb-6" />
+
         {/* Records List */}
         <div className="space-y-4 mb-8">
           {records.map((record) => {
@@ -131,7 +134,9 @@ export default function RecordsPage() {
             return (
               <div
                 key={record.id}
-                className="bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all"
+                className={`bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all duration-300 border-l border-l-[#FF6347] ${
+                  isCompleted ? "hover:border-l-4" : "border-l-4"
+                }`}
               >
                 {/* Top Row */}
                 <div className="flex items-center justify-between mb-4">
