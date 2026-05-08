@@ -71,3 +71,6 @@ test-results/
 
 # Screenshots from playbook
 screenshots/
+
+# Claude Code local
+.claude/
