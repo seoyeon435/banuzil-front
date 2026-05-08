@@ -61,7 +61,7 @@ export default function MediationResultPage() {
         <div className="bg-white rounded-xl p-4 mb-6 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                 박
               </div>
               <div>
@@ -70,7 +70,7 @@ export default function MediationResultPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                 지
               </div>
               <div>

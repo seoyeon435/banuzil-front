@@ -48,7 +48,7 @@ export default function FriendsPage() {
           {/* Search Result Example */}
           <div className="mt-4 p-4 bg-[#FFE0CC] rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                 이
               </div>
               <div>
@@ -80,7 +80,7 @@ export default function FriendsPage() {
                 className="bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)] flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                     {request.name[0]}
                   </div>
                   <div>
@@ -145,7 +145,7 @@ export default function FriendsPage() {
                     <tr key={friend.id} className="border-b border-[#F0DFD0] last:border-b-0 hover:bg-[#FFF8F4] transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                             {friend.name[0]}
                           </div>
                           <div>

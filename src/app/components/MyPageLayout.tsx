@@ -31,7 +31,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         {/* User Profile Section */}
         <div className="p-6 border-b border-[#F0DFD0]">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xl font-bold">
               박
             </div>
             <div>

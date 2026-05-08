@@ -23,7 +23,7 @@ export default function MediationInputPage() {
       <div className="w-[420px] bg-[#FFE9DD] p-8 flex flex-col">
         {/* User Info */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+          <div className="w-12 h-12 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
             박
           </div>
           <div>

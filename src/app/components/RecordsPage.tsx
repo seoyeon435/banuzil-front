@@ -163,7 +163,7 @@ export default function RecordsPage() {
                 {/* Middle Row */}
                 <div className="flex items-center gap-4 mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-sm font-bold">
                       {record.partner[0]}
                     </div>
                     <span className="text-[#1F1410] font-medium">

@@ -10,7 +10,7 @@ export default function ProfilePage() {
         {/* Profile Info Card */}
         <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-3xl font-bold flex-shrink-0">
               박
             </div>
             <div className="flex-1">

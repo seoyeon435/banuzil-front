@@ -53,7 +53,7 @@ export default function MediationCompletePage() {
             <div className="space-y-4">
               <div className="bg-[#FFF8F4] border-l-4 border-[#FF6347] rounded-lg p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-sm font-bold">
                     박
                   </div>
                   <span className="font-semibold text-[#1F1410]">박서연 (ENFP)</span>
@@ -64,7 +64,7 @@ export default function MediationCompletePage() {
               </div>
               <div className="bg-[#FFF8F4] border-l-4 border-[#D4956A] rounded-lg p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-sm font-bold">
                     지
                   </div>
                   <span className="font-semibold text-[#1F1410]">지현 (INFP)</span>

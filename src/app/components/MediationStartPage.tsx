@@ -73,7 +73,7 @@ export default function MediationStartPage() {
                   </div>
                 )}
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6347] to-[#E84028] flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
                     {friend.name[0]}
                   </div>
                   <div className="text-left">
