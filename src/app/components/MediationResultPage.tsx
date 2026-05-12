@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { AlertTriangle, Send } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -46,6 +46,7 @@ type MessageItem =
   | { role: "ai-analysis"; roundIdx: number; text: string };
 
 export default function MediationResultPage() {
+  const navigate = useNavigate();
   const [currentRound, setCurrentRound] = useState(0);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<MessageItem[]>([
@@ -53,6 +54,13 @@ export default function MediationResultPage() {
   ]);
   const [isComplete, setIsComplete] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // 한 라운드 이상 완료했는지 (중간 종료 버튼 표시 조건)
+  const canEarlyExit = currentRound >= 1 && !isComplete;
+
+  const handleEarlyExit = () => {
+    navigate("/mediation/complete", { state: { earlyExit: true } });
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -149,8 +157,8 @@ export default function MediationResultPage() {
         <div className="bg-white rounded-xl p-4 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
           <div className="space-y-3">
             {[
-              { initial: "박", name: "나 (박서연)", type: "안정형" },
-              { initial: "지", name: "지현", type: "불안형" },
+              { initial: "여", name: "나 (여자친구)", type: "안정형" },
+              { initial: "남", name: "남자친구", type: "불안형" },
             ].map((p) => (
               <div key={p.name} className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold text-sm flex-shrink-0">
@@ -181,20 +189,20 @@ export default function MediationResultPage() {
               <span className="font-semibold text-[#1F1410]">바느질 AI</span>
             </div>
             <p className="text-[#1F1410]">
-              박서연님과 지현님의 이야기를 들었어요. EFT 상담 흐름에 따라 단계별로 함께 정리해 드릴게요.
+              두 분의 이야기를 들었어요. EFT 상담 흐름에 따라 단계별로 함께 정리해 드릴게요.
             </p>
           </div>
 
           {/* Partner view (blurred) */}
           <div className="bg-white rounded-xl p-5 relative overflow-hidden shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
-            <div className="text-sm font-semibold text-[#7A5C4D] mb-2">[지현님 입장 — AI 정리본]</div>
+            <div className="text-sm font-semibold text-[#7A5C4D] mb-2">[남자친구 입장 — AI 정리본]</div>
             <div className="blur-sm select-none text-[#7A5C4D] text-sm">
-              지현님은 사실 여행을 가고 싶었던 게 도피가 아니라 재충전이 필요했던 거였어요...
+              남자친구는 사실 여행을 가고 싶었던 게 도피가 아니라 재충전이 필요했던 거였어요...
             </div>
             <div className="absolute inset-0 flex items-center justify-center bg-white/70">
               <div className="flex items-center gap-2 text-[#7A5C4D]">
                 <span className="text-xl">🔒</span>
-                <span className="text-sm font-medium">지현님에게만 표시됩니다</span>
+                <span className="text-sm font-medium">남자친구에게만 표시됩니다</span>
               </div>
             </div>
           </div>
@@ -275,6 +283,16 @@ export default function MediationResultPage() {
                   답변 제출하기
                 </button>
               </div>
+
+              {/* 중간 종료 버튼 — 1라운드 이상 완료 시 표시 */}
+              {canEarlyExit && (
+                <button
+                  onClick={handleEarlyExit}
+                  className="w-full mt-3 py-2.5 border-2 border-[#D4956A] text-[#D4956A] rounded-full hover:bg-[#FFE9DD] transition-all text-sm font-medium"
+                >
+                  여기까지 정리하고 결과 보기
+                </button>
+              )}
             </div>
           )}
 

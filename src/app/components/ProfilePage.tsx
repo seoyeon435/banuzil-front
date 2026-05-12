@@ -11,11 +11,11 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-3xl font-bold flex-shrink-0">
-              박
+              여
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-semibold text-[#1F1410]">박서연</h2>
+                <h2 className="text-2xl font-semibold text-[#1F1410]">여자친구</h2>
                 <button className="px-4 py-1.5 text-sm border border-[#F0DFD0] text-[#7A5C4D] rounded-lg hover:border-[#FF6347] hover:text-[#FF6347] transition-all">
                   이름 수정
                 </button>
