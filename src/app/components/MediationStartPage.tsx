@@ -1,115 +1,99 @@
 import { Link } from "react-router";
-import { Check } from "lucide-react";
-import { useState } from "react";
-
-const friends = [
-  { id: 1, name: "지현", username: "@jihyun_bak", mbti: "INFP" },
-  { id: 2, name: "원규", username: "@wongyu_j", mbti: "ISTJ" },
-  { id: 3, name: "민지", username: "@minji_k", mbti: "ENFJ" },
-  { id: 4, name: "서준", username: "@seojun_p", mbti: "INTP" },
-];
 
 export default function MediationStartPage() {
-  const [selectedFriend, setSelectedFriend] = useState<number | null>(null);
-
   return (
     <div className="min-h-screen bg-[#FFF8F4] flex items-center justify-center py-12">
       <div className="w-full max-w-[640px] px-6">
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-3 mb-12">
+        <div className="flex items-center justify-center gap-2 mb-12 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#FF6347] text-white flex items-center justify-center text-sm font-bold">
               ①
             </div>
-            <span className="text-[#FF6347] font-medium">친구 선택</span>
+            <span className="text-[#FF6347] font-medium">갈등 시작</span>
           </div>
           <div className="w-8 h-[2px] bg-[#F0DFD0]" />
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
               ②
             </div>
-            <span className="text-[#7A5C4D]">상황 입력</span>
+            <span className="text-[#7A5C4D]">나의 입장 입력</span>
           </div>
           <div className="w-8 h-[2px] bg-[#F0DFD0]" />
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
               ③
             </div>
-            <span className="text-[#7A5C4D]">AI 중재</span>
+            <span className="text-[#7A5C4D]">상대방 대기</span>
           </div>
           <div className="w-8 h-[2px] bg-[#F0DFD0]" />
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
               ④
             </div>
+            <span className="text-[#7A5C4D]">AI 분석</span>
+          </div>
+          <div className="w-8 h-[2px] bg-[#F0DFD0]" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
+              ⑤
+            </div>
             <span className="text-[#7A5C4D]">완료</span>
           </div>
         </div>
 
         {/* Heading */}
-        <h1 className="text-[36px] font-semibold text-[#1F1410] text-center mb-10">
-          누구와의 갈등인가요?
+        <h1 className="text-[36px] font-semibold text-[#1F1410] text-center mb-4">
+          오늘 어떤 갈등을 함께 돌아볼까요?
         </h1>
+        <p className="text-center text-[#7A5C4D] mb-10 leading-relaxed">
+          두 사람이 각자의 입장을 따로 입력하면,<br />
+          AI가 EFT 상담 흐름으로 감정과 욕구를 분석해드려요.
+        </p>
 
-        {/* Friend Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {friends.map((friend) => {
-            const isSelected = selectedFriend === friend.id;
-            return (
-              <button
-                key={friend.id}
-                onClick={() => setSelectedFriend(friend.id)}
-                className={`
-                  relative bg-white rounded-xl p-6 transition-all duration-300
-                  ${isSelected
-                    ? 'border-2 border-[#FF6347] bg-[#FF6347]/5'
-                    : 'border border-transparent border-l border-l-[#FF6347] hover:border-l-4'
-                  }
-                `}
-              >
-                {isSelected && (
-                  <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#FF6347] flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold">
-                    {friend.name[0]}
-                  </div>
-                  <div className="text-left">
-                    <p className="text-lg font-semibold text-[#1F1410]">{friend.name}</p>
-                    <p className="text-sm text-[#7A5C4D]">{friend.username}</p>
-                  </div>
-                </div>
-                <span className="inline-block px-3 py-1 bg-[#FF6347]/10 text-[#FF6347] text-sm rounded-full">
-                  {friend.mbti}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Add Friend Link */}
-        <div className="text-center mb-10">
-          <p className="text-[#7A5C4D] mb-2">목록에 없나요?</p>
-          <Link to="/mypage/friends" className="text-[#FF6347] hover:text-[#E84028] underline font-medium">
-            친구 추가하기
-          </Link>
+        {/* Info Cards */}
+        <div className="grid grid-cols-1 gap-4 mb-10">
+          <div className="bg-white rounded-xl p-6 border-l-4 border-[#FF6347] shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">💬</span>
+              <div>
+                <p className="font-semibold text-[#1F1410] mb-1">나의 입장을 솔직하게 작성해요</p>
+                <p className="text-sm text-[#7A5C4D]">
+                  상대방은 내 입장을 바로 볼 수 없어요. AI가 먼저 읽고 정리해드려요.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 border-l-4 border-[#D4956A] shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">🔒</span>
+              <div>
+                <p className="font-semibold text-[#1F1410] mb-1">상대방도 따로 입력해요</p>
+                <p className="text-sm text-[#7A5C4D]">
+                  두 사람이 각자 입력을 마치면, AI가 편향 없는 분석을 시작해요.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 border-l-4 border-[#5A9F7C] shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">🧵</span>
+              <div>
+                <p className="font-semibold text-[#1F1410] mb-1">EFT 흐름에 따라 감정을 돌아봐요</p>
+                <p className="text-sm text-[#7A5C4D]">
+                  공감 → 감정 확인 → 패턴 파악 → 대화 스크립트 → 합의안 순으로 진행돼요.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Next Button */}
         <Link
-          to={selectedFriend ? "/mediation/input" : "#"}
-          className={`
-            block w-full h-14 rounded-full text-white text-center leading-[56px] font-medium transition-all
-            ${selectedFriend
-              ? 'bg-[#FF6347] hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] cursor-pointer'
-              : 'bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed'
-            }
-          `}
-          onClick={(e) => !selectedFriend && e.preventDefault()}
+          to="/mediation/input"
+          className="block w-full h-14 rounded-full bg-[#FF6347] text-white text-center leading-[56px] font-medium hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] transition-all"
         >
-          다음 →
+          갈등 중재 시작하기 →
         </Link>
       </div>
     </div>

@@ -1,9 +1,18 @@
 import { Link } from "react-router";
-import { AlertTriangle, Copy, Lightbulb, Handshake, MessageCircle } from "lucide-react";
+import { AlertTriangle, Copy, Lightbulb, Handshake, MessageCircle, HelpCircle } from "lucide-react";
 import { useState } from "react";
+
+const eftQuestions = [
+  "상대의 말에서 가장 아프게 느껴진 부분은 무엇이었나요?",
+  "그 순간 내가 정말 원했던 것은 사과였나요, 이해였나요, 안심이었나요?",
+  "상대가 나를 공격한다고 느낀 이유는 무엇인가요?",
+  "이번 갈등에서 반복되는 감정 패턴이 있다면 무엇인가요?",
+  "지금 상대에게 가장 안전하게 전달하고 싶은 말은 무엇인가요?",
+];
 
 export default function MediationResultPage() {
   const [response, setResponse] = useState("");
+  const [eftAnswers, setEftAnswers] = useState<Record<number, string>>({});
 
   return (
     <div className="min-h-screen bg-[#FFF8F4] flex">
@@ -21,7 +30,7 @@ export default function MediationResultPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#FF6347]" />
-              <span className="text-[#1F1410] font-medium">입장 전달</span>
+              <span className="text-[#1F1410] font-medium">감정 확인 중</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#F0DFD0]" />
@@ -66,7 +75,7 @@ export default function MediationResultPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#1F1410]">나 (박서연)</p>
-                <span className="text-xs text-[#FF6347]">ENFP</span>
+                <span className="text-xs text-[#FF6347]">안정형 애착</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -75,16 +84,14 @@ export default function MediationResultPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#1F1410]">지현</p>
-                <span className="text-xs text-[#FF6347]">INFP</span>
+                <span className="text-xs text-[#FF6347]">불안형 애착</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* End Mediation */}
         <button className="w-full py-3 border-2 border-[#DC3545] text-[#DC3545] rounded-full hover:bg-[#FFE0E0] transition-all">
           중재 종료하기
         </button>
@@ -93,17 +100,16 @@ export default function MediationResultPage() {
       {/* Center Column - Chat Timeline */}
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-[700px] mx-auto space-y-6">
-          {/* AI Message 1 */}
+
+          {/* ① 공감 메시지 */}
           <div className="bg-[#FF6347]/5 border-l-4 border-[#FF6347] rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🧵</span>
-              <span className="font-semibold text-[#1F1410]">바느질 AI</span>
+              <span className="font-semibold text-[#1F1410]">바느질 AI — 공감 메시지</span>
             </div>
             <p className="text-[#1F1410] mb-6">
               박서연님과 지현님의 이야기를 들었어요.
             </p>
-
-            {/* Message to 박서연 */}
             <div className="bg-white rounded-xl p-5 mb-4">
               <div className="text-sm font-semibold text-[#FF6347] mb-2">[박서연님에게]</div>
               <p className="text-[#1F1410] leading-relaxed">
@@ -111,14 +117,10 @@ export default function MediationResultPage() {
                 내가 아무것도 아닌 것 같은 느낌이었을 것 같아.
               </p>
             </div>
-
-            {/* Message to 지현 (Blurred) */}
             <div className="bg-white rounded-xl p-5 relative overflow-hidden">
               <div className="text-sm font-semibold text-[#7A5C4D] mb-2">[지현님에게는]</div>
               <div className="blur-sm select-none">
-                <p className="text-[#7A5C4D]">
-                  지현님의 메시지는 지현님께만 보여요...
-                </p>
+                <p className="text-[#7A5C4D]">지현님의 메시지는 지현님께만 보여요...</p>
               </div>
               <div className="absolute inset-0 flex items-center justify-center bg-white/60">
                 <div className="flex items-center gap-2 text-[#7A5C4D]">
@@ -129,18 +131,17 @@ export default function MediationResultPage() {
             </div>
           </div>
 
-          {/* Divider */}
+          {/* ② 상대방 입장 요약 */}
           <div className="flex items-center gap-4">
             <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
             <span className="text-sm text-[#7A5C4D]">지현님의 입장이 전달되었어요</span>
             <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
           </div>
 
-          {/* AI Message 2 */}
           <div className="bg-[#FF6347]/5 border-l-4 border-[#FF6347] rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🧵</span>
-              <span className="font-semibold text-[#1F1410]">바느질 AI</span>
+              <span className="font-semibold text-[#1F1410]">상대방 입장 요약</span>
             </div>
             <p className="text-[#1F1410] font-semibold mb-3">지현님은 이렇게 느꼈대요</p>
             <p className="text-[#1F1410] leading-relaxed">
@@ -150,7 +151,32 @@ export default function MediationResultPage() {
             </p>
           </div>
 
-          {/* Response Input */}
+          {/* ③ EFT 감정 확인 질문 */}
+          <div className="bg-white border-l-4 border-[#D4956A] rounded-xl p-6 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
+            <div className="flex items-center gap-2 mb-4">
+              <HelpCircle className="w-6 h-6 text-[#D4956A]" />
+              <span className="font-semibold text-[#1F1410]">AI가 묻는 감정 확인 질문</span>
+            </div>
+            <p className="text-sm text-[#7A5C4D] mb-5">
+              EFT 상담 흐름에 따라, 내 감정과 욕구를 더 깊이 돌아볼 수 있도록 도와드려요.
+              답변은 선택사항이에요.
+            </p>
+            <div className="space-y-4">
+              {eftQuestions.map((q, i) => (
+                <div key={i} className="bg-[#FFF8F4] rounded-xl p-4">
+                  <p className="text-sm font-medium text-[#1F1410] mb-2">Q{i + 1}. {q}</p>
+                  <textarea
+                    value={eftAnswers[i] || ""}
+                    onChange={(e) => setEftAnswers({ ...eftAnswers, [i]: e.target.value })}
+                    placeholder="여기에 자유롭게 적어보세요..."
+                    className="w-full h-16 p-3 bg-white border border-[#F0DFD0] rounded-lg focus:outline-none focus:border-[#D4956A] resize-none text-[#1F1410] text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ④ 나의 반응 입력 */}
           <div className="bg-white rounded-xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)]">
             <label className="block text-sm font-medium text-[#1F1410] mb-3">
               나의 반응 입력
@@ -168,7 +194,7 @@ export default function MediationResultPage() {
               </button>
               <Link
                 to="/mediation/complete"
-                className="flex-1 py-3 bg-[#5A9F7C] text-white rounded-full hover:bg-[#5A9F7C] transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[#5A9F7C] text-white rounded-full hover:bg-[#4d8f6d] transition-all flex items-center justify-center gap-2"
               >
                 <span>✓</span>
                 중재 완료하기
@@ -188,11 +214,18 @@ export default function MediationResultPage() {
             <Lightbulb className="w-5 h-5 text-[#D4956A]" />
             <span className="font-semibold text-[#1F1410]">공통점 발견</span>
           </div>
-          <p className="text-sm text-[#1F1410] mb-2 font-medium">
-            결국 둘 다 원하는 건 같아요
-          </p>
+          <p className="text-sm text-[#1F1410] mb-2 font-medium">결국 둘 다 원하는 건 같아요</p>
+          <p className="text-sm text-[#7A5C4D]">서로에게 인정받고 싶은 마음</p>
+        </div>
+
+        {/* Recurring Pattern */}
+        <div className="bg-[#FF6347]/5 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-5 h-5 text-[#FF6347]" />
+            <span className="font-semibold text-[#1F1410]">반복되는 갈등 패턴</span>
+          </div>
           <p className="text-sm text-[#7A5C4D]">
-            서로에게 인정받고 싶은 마음
+            "내가 힘들다고 말하지 못하고 쌓아두다가 폭발하는 패턴"이 두 분 모두에게 보여요.
           </p>
         </div>
 
@@ -202,9 +235,7 @@ export default function MediationResultPage() {
             <Handshake className="w-5 h-5 text-[#5A9F7C]" />
             <span className="font-semibold text-[#1F1410]">합의안 제안</span>
           </div>
-          <p className="text-sm text-[#1F1410] mb-3 font-medium">
-            이런 방법은 어떨까요
-          </p>
+          <p className="text-sm text-[#1F1410] mb-3 font-medium">이런 방법은 어떨까요</p>
           <div className="space-y-2">
             <button className="w-full text-left px-3 py-2 bg-white border border-[#5A9F7C] text-[#1F1410] rounded-lg hover:bg-[#5A9F7C]/5 transition-all text-sm">
               시험 끝나고 짧은 여행 가기
@@ -219,11 +250,9 @@ export default function MediationResultPage() {
         <div className="bg-[#FF6347]/5 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <MessageCircle className="w-5 h-5 text-[#FF6347]" />
-            <span className="font-semibold text-[#1F1410]">나의 스크립트</span>
+            <span className="font-semibold text-[#1F1410]">대화 스크립트</span>
           </div>
-          <p className="text-sm text-[#1F1410] mb-3 font-medium">
-            이렇게 말해볼 수 있어요
-          </p>
+          <p className="text-sm text-[#1F1410] mb-3 font-medium">이렇게 말해볼 수 있어요</p>
           <div className="bg-white rounded-lg p-3 mb-3 text-sm text-[#1F1410] leading-relaxed border border-[#FF6347]/20">
             "나도 네가 힘들었다는 거 이해해. 내가 너무 내 입장만 생각했던 것 같아. 미안해."
           </div>

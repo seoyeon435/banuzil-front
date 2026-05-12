@@ -4,8 +4,8 @@ import { useNavigate } from "react-router";
 const statusMessages = [
   "박서연님의 감정 패턴 분석 중...",
   "지현님의 입장 이해 중...",
-  "MBTI 기반 공통점 찾는 중...",
-  "중립적인 전달 방식 준비 중...",
+  "애착유형 기반 감정 욕구 파악 중...",
+  "EFT 흐름에 따라 중재 방식 준비 중...",
 ];
 
 export default function MediationAnalyzingPage() {

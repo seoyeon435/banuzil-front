@@ -133,25 +133,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-            <span className="text-sm text-[#7A5C4D]">또는</span>
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-          </div>
-
-          {/* Social Login */}
-          <div className="space-y-3">
-            <button className="w-full h-[48px] border-2 border-[#FEE500] bg-[#FEE500] text-[#000000] rounded-xl hover:bg-[#FEE500]/90 transition-all flex items-center justify-center gap-2">
-              <span>🟡</span>
-              카카오로 계속하기
-            </button>
-            <button className="w-full h-[48px] border-2 border-[#F0DFD0] bg-white text-[#1F1410] rounded-xl hover:bg-[#FFE0CC] transition-all flex items-center justify-center gap-2">
-              <span>⬜</span>
-              구글로 계속하기
-            </button>
-          </div>
-
           {/* Terms */}
           <p className="text-xs text-[#7A5C4D] text-center mt-8">
             로그인하면 이용약관 및 개인정보처리방침에

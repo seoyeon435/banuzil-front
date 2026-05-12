@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
     Component: RecordsPage,
   },
   {
-    path: "/mypage/friends",
+    path: "/mypage/our-space",
     Component: FriendsPage,
   },
   {

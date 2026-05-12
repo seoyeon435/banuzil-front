@@ -49,22 +49,15 @@ export default function AttachmentSurveyPage() {
     setAnswers({ ...answers, [questionId]: value });
   };
 
-  const isPageComplete = () => {
-    return currentQuestions.every(q => answers[q.id] !== undefined);
-  };
+  // TODO: 실제 배포 시 모든 문항 선택 검증 로직 복구 필요
+  const isPageComplete = () => true;
 
   const handleNext = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Calculate result and navigate to completion
-      const totalAnswered = Object.keys(answers).length;
-      if (totalAnswered === anxietyQuestions.length) {
-        // Here you would calculate the attachment type
-        // For now, just navigate to login
-        navigate("/login");
-      }
+      navigate("/login");
     }
   };
 
@@ -188,41 +181,42 @@ export default function AttachmentSurveyPage() {
                   </p>
                 </div>
 
-                {/* Scale */}
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5, 6, 7].map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => handleAnswer(question.id, value)}
-                      className={`
-                        w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all
-                        ${answers[question.id] === value
-                          ? 'border-[#FF6347] bg-[#FF6347]/5'
-                          : 'border-[#F0DFD0] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]'
-                        }
-                      `}
-                    >
-                      <div className={`
-                        w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
-                        ${answers[question.id] === value
-                          ? 'border-[#FF6347] bg-[#FF6347]'
-                          : 'border-[#F0DFD0]'
-                        }
-                      `}>
-                        {answers[question.id] === value && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between flex-1">
-                        <span className={`text-sm ${answers[question.id] === value ? 'text-[#1F1410] font-medium' : 'text-[#7A5C4D]'}`}>
-                          {scaleLabels[value - 1]}
-                        </span>
+                {/* Scale — 가로 배치, 모바일 반응형 */}
+                <div>
+                  <div className="flex justify-between text-xs text-[#7A5C4D] mb-2 px-1">
+                    <span>{scaleLabels[0]}</span>
+                    <span>{scaleLabels[6]}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-between">
+                    {[1, 2, 3, 4, 5, 6, 7].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => handleAnswer(question.id, value)}
+                        className={`
+                          flex flex-col items-center gap-1 w-12 py-3 rounded-xl border-2 transition-all flex-shrink-0
+                          ${answers[question.id] === value
+                            ? 'border-[#FF6347] bg-[#FF6347]/10'
+                            : 'border-[#F0DFD0] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]'
+                          }
+                        `}
+                      >
+                        <div className={`
+                          w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                          ${answers[question.id] === value
+                            ? 'border-[#FF6347] bg-[#FF6347]'
+                            : 'border-[#F0DFD0]'
+                          }
+                        `}>
+                          {answers[question.id] === value && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
                         <span className={`text-sm font-semibold ${answers[question.id] === value ? 'text-[#FF6347]' : 'text-[#7A5C4D]'}`}>
                           {value}
                         </span>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -265,7 +259,7 @@ export default function AttachmentSurveyPage() {
 
           {/* Help Text */}
           <p className="text-center text-sm text-[#7A5C4D] mt-6">
-            현재 페이지의 모든 문항에 답변해주세요
+            답변하지 않은 문항이 있어도 다음으로 넘어갈 수 있어요
           </p>
         </div>
       </div>

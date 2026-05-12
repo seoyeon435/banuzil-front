@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Download, Home, Share2, CheckCircle } from "lucide-react";
+import { Download, Home, Share2, CheckCircle, MessageCircle } from "lucide-react";
 
 export default function MediationCompletePage() {
   return (
@@ -113,6 +113,37 @@ export default function MediationCompletePage() {
           </div>
         </div>
 
+        {/* Next Conversation Questions */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-8">
+          <div className="flex items-center gap-3 mb-5">
+            <MessageCircle className="w-6 h-6 text-[#D4956A]" />
+            <h3 className="text-lg font-semibold text-[#1F1410]">다음에 다시 이야기해볼 질문</h3>
+          </div>
+          <p className="text-sm text-[#7A5C4D] mb-5">
+            이번 갈등을 해결했지만, 아래 질문들을 천천히 함께 나눠보면 다음 갈등을 예방하는 데 도움이 돼요.
+          </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 bg-[#FFF8F4] border border-[#F0DFD0] rounded-xl p-4">
+              <span className="text-lg flex-shrink-0">💬</span>
+              <p className="text-[#1F1410] text-sm leading-relaxed">
+                우리가 갈등할 때 서로에게 가장 필요한 것은 무엇인가요? (사과, 공감, 시간, 안심 중에서)
+              </p>
+            </div>
+            <div className="flex items-start gap-3 bg-[#FFF8F4] border border-[#F0DFD0] rounded-xl p-4">
+              <span className="text-lg flex-shrink-0">💬</span>
+              <p className="text-[#1F1410] text-sm leading-relaxed">
+                내가 힘들 때 상대에게 어떻게 말해주면 가장 마음이 편안해지나요?
+              </p>
+            </div>
+            <div className="flex items-start gap-3 bg-[#FFF8F4] border border-[#F0DFD0] rounded-xl p-4">
+              <span className="text-lg flex-shrink-0">💬</span>
+              <p className="text-[#1F1410] text-sm leading-relaxed">
+                우리 관계에서 앞으로 반복하고 싶지 않은 패턴이 있다면 무엇인가요?
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-4">
           <button className="flex-1 py-4 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(255,99,71,0.25)]">
@@ -126,9 +157,9 @@ export default function MediationCompletePage() {
             <Home className="w-5 h-5" />
             홈으로 돌아가기
           </Link>
-          <button className="flex-1 py-4 bg-[#5A9F7C] text-white rounded-full hover:bg-[#5A9F7C] transition-all flex items-center justify-center gap-2">
+          <button className="flex-1 py-4 bg-[#5A9F7C] text-white rounded-full hover:bg-[#4d8f6d] transition-all flex items-center justify-center gap-2">
             <Share2 className="w-5 h-5" />
-            친구에게 공유하기
+            우리 공간에 저장하기
           </button>
         </div>
       </div>

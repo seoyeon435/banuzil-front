@@ -254,30 +254,6 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-            <span className="text-sm text-[#7A5C4D]">또는</span>
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-          </div>
-
-          {/* Social Signup */}
-          <div className="space-y-3">
-            <Link
-              to="/signup/attachment-survey"
-              className="w-full h-[48px] border-2 border-[#FEE500] bg-[#FEE500] text-[#000000] rounded-xl hover:bg-[#FEE500]/90 transition-all flex items-center justify-center gap-2"
-            >
-              <span>🟡</span>
-              카카오로 시작하기
-            </Link>
-            <Link
-              to="/signup/attachment-survey"
-              className="w-full h-[48px] border-2 border-[#F0DFD0] bg-white text-[#1F1410] rounded-xl hover:bg-[#FFE0CC] transition-all flex items-center justify-center gap-2"
-            >
-              <span>⬜</span>
-              구글로 시작하기
-            </Link>
-          </div>
         </div>
       </div>
     </div>

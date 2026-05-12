@@ -119,10 +119,10 @@ export default function LandingPage() {
                 🫂
               </div>
               <h3 className="text-2xl font-semibold text-[#1F1410] mb-3">
-                MBTI 기반 공감
+                애착유형 기반 감정 분석
               </h3>
               <p className="text-[#7A5C4D] leading-[1.7]">
-                당신의 MBTI 성향을 깊이 이해하고,
+                당신의 애착 성향을 깊이 이해하고,
                 <br />
                 감정의 원인을 정확하게 짚어드려요
               </p>
@@ -211,9 +211,9 @@ export default function LandingPage() {
                 </div>
                 <div className="text-4xl mb-4">AI 분석</div>
                 <p className="text-[#7A5C4D] leading-[1.7]">
-                  MBTI 기반으로
+                  EFT 흐름에 따라
                   <br />
-                  두 사람을 분석해요
+                  감정과 욕구를 분석해요
                 </p>
               </div>
 
