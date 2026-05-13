@@ -193,10 +193,10 @@ export default function AttachmentSurveyPage() {
                         key={value}
                         onClick={() => handleAnswer(question.id, value)}
                         className={`
-                          flex flex-col items-center gap-1 w-12 py-3 rounded-xl border-2 transition-all flex-shrink-0
+                          flex flex-col items-center gap-1 w-12 py-3 rounded-xl transition-all flex-shrink-0
                           ${answers[question.id] === value
-                            ? 'border-[#FF6347] bg-[#FF6347]/10'
-                            : 'border-[#F0DFD0] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]'
+                            ? 'bg-[#FF6347]/10'
+                            : 'hover:bg-[#FFF8F4]'
                           }
                         `}
                       >
@@ -211,9 +211,6 @@ export default function AttachmentSurveyPage() {
                             <div className="w-2 h-2 rounded-full bg-white" />
                           )}
                         </div>
-                        <span className={`text-sm font-semibold ${answers[question.id] === value ? 'text-[#FF6347]' : 'text-[#7A5C4D]'}`}>
-                          {value}
-                        </span>
                       </button>
                     ))}
                   </div>

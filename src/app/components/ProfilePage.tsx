@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import MyPageLayout from "./MyPageLayout";
 import StitchDivider from "./ui/StitchDivider";
 
@@ -34,9 +35,9 @@ export default function ProfilePage() {
           <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-l-4 border-l-[#5A9F7C] transition-all duration-300">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xl font-semibold text-[#1F1410]">나의 애착유형</h3>
-              <button className="px-4 py-1.5 text-sm border border-[#5A9F7C] text-[#5A9F7C] rounded-lg hover:bg-[#5A9F7C]/5 transition-all">
-                수정하기
-              </button>
+              <Link to="/signup/attachment-survey" className="px-4 py-1.5 text-sm border border-[#5A9F7C] text-[#5A9F7C] rounded-lg hover:bg-[#5A9F7C]/5 transition-all">
+                재검사
+              </Link>
             </div>
             <p className="text-xs text-[#5A9F7C] mb-5">핵심 갈등 분석 기준 · EFT 상담 흐름 적용</p>
 
