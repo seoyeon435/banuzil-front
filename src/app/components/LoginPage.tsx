@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -80,16 +80,16 @@ export default function LoginPage() {
 
           {/* Form */}
           <form className="space-y-4">
-            {/* Email Input */}
+            {/* ID Input */}
             <div>
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
-                이메일
+                아이디
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
-                  type="email"
-                  placeholder="이메일 주소를 입력해주세요"
+                  type="text"
+                  placeholder="아이디를 입력해주세요"
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
@@ -132,25 +132,6 @@ export default function LoginPage() {
               로그인
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-            <span className="text-sm text-[#7A5C4D]">또는</span>
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-          </div>
-
-          {/* Social Login */}
-          <div className="space-y-3">
-            <button className="w-full h-[48px] border-2 border-[#FEE500] bg-[#FEE500] text-[#000000] rounded-xl hover:bg-[#FEE500]/90 transition-all flex items-center justify-center gap-2">
-              <span>🟡</span>
-              카카오로 계속하기
-            </button>
-            <button className="w-full h-[48px] border-2 border-[#F0DFD0] bg-white text-[#1F1410] rounded-xl hover:bg-[#FFE0CC] transition-all flex items-center justify-center gap-2">
-              <span>⬜</span>
-              구글로 계속하기
-            </button>
-          </div>
 
           {/* Terms */}
           <p className="text-xs text-[#7A5C4D] text-center mt-8">

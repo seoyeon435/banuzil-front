@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { User, BarChart3, FileText, Users, Settings, LogOut } from "lucide-react";
+import { User, BarChart3, FileText, Heart, LogOut } from "lucide-react";
 
 interface MyPageLayoutProps {
   children: React.ReactNode;
@@ -12,8 +12,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
     { path: "/mypage/profile", icon: User, label: "내 프로필", emoji: "👤" },
     { path: "/mypage/statistics", icon: BarChart3, label: "갈등 통계", emoji: "📊" },
     { path: "/mypage/records", icon: FileText, label: "갈등 기록", emoji: "📋" },
-    { path: "/mypage/friends", icon: Users, label: "친구 관리", emoji: "👥" },
-    { path: "/mypage/settings", icon: Settings, label: "설정", emoji: "⚙️" },
+    { path: "/mypage/our-space", icon: Heart, label: "둘만의 공간", emoji: "💑" },
   ];
 
   return (
@@ -32,10 +31,10 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         <div className="p-6 border-b border-[#F0DFD0]">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xl font-bold">
-              박
-            </div>
+              여
+</div>
             <div>
-              <h3 className="text-lg font-semibold text-[#1F1410]">박서연</h3>
+              <h3 className="text-lg font-semibold text-[#1F1410]">여자친구</h3>
               <span className="inline-block px-3 py-1 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full mt-1">
                 ENFP
               </span>

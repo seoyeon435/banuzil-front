@@ -16,64 +16,19 @@ import MediationResultPage from "./components/MediationResultPage";
 import MediationCompletePage from "./components/MediationCompletePage";
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    Component: LandingPage,
-  },
-  {
-    path: "/login",
-    Component: LoginPage,
-  },
-  {
-    path: "/signup",
-    Component: SignupPage,
-  },
-  {
-    path: "/signup/attachment-survey",
-    Component: AttachmentSurveyPage,
-  },
-  {
-    path: "/mypage/profile",
-    Component: ProfilePage,
-  },
-  {
-    path: "/mypage/statistics",
-    Component: StatisticsPage,
-  },
-  {
-    path: "/mypage/records",
-    Component: RecordsPage,
-  },
-  {
-    path: "/mypage/friends",
-    Component: FriendsPage,
-  },
-  {
-    path: "/mypage/settings",
-    Component: SettingsPage,
-  },
-  {
-    path: "/mediation/start",
-    Component: MediationStartPage,
-  },
-  {
-    path: "/mediation/input",
-    Component: MediationInputPage,
-  },
-  {
-    path: "/mediation/waiting",
-    Component: MediationWaitingPage,
-  },
-  {
-    path: "/mediation/analyzing",
-    Component: MediationAnalyzingPage,
-  },
-  {
-    path: "/mediation/result",
-    Component: MediationResultPage,
-  },
-  {
-    path: "/mediation/complete",
-    Component: MediationCompletePage,
-  },
+  { path: "/",                         Component: LandingPage },
+  { path: "/login",                    Component: LoginPage },
+  { path: "/signup",                   Component: SignupPage },
+  { path: "/signup/attachment-survey", Component: AttachmentSurveyPage },
+  { path: "/mypage/profile",           Component: ProfilePage },
+  { path: "/mypage/statistics",        Component: StatisticsPage },
+  { path: "/mypage/records",           Component: RecordsPage },
+  { path: "/mypage/our-space",         Component: FriendsPage },
+  { path: "/mypage/settings",          Component: SettingsPage },
+  { path: "/mediation/start",          Component: MediationStartPage },
+  { path: "/mediation/input",          Component: MediationInputPage },
+  { path: "/mediation/waiting",        Component: MediationWaitingPage },
+  { path: "/mediation/analyzing",      Component: MediationAnalyzingPage },
+  { path: "/mediation/result",         Component: MediationResultPage },
+  { path: "/mediation/complete",       Component: MediationCompletePage },
 ]);

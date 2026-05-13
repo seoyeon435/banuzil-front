@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Mail, Lock, User, Eye, EyeOff, Check } from "lucide-react";
+import { Lock, User, Eye, EyeOff, Check, Venus, Mars } from "lucide-react";
 import { useState } from "react";
 
 export default function SignupPage() {
@@ -7,8 +7,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [marketingAccepted, setMarketingAccepted] = useState(false);
+  const [gender, setGender] = useState<"male" | "female" | "">("");
 
   const getPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) return 0;
@@ -112,16 +111,16 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Email Input */}
+            {/* ID Input */}
             <div>
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
-                이메일
+                아이디
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
-                  type="email"
-                  placeholder="이메일 주소를 입력해주세요"
+                  type="text"
+                  placeholder="사용할 아이디를 입력해주세요"
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
@@ -187,6 +186,39 @@ export default function SignupPage() {
               </div>
             </div>
 
+            {/* Gender Select */}
+            <div>
+              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+                성별
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setGender("female")}
+                  className={`flex items-center justify-center gap-2 h-12 rounded-xl border-2 transition-all font-medium text-sm ${
+                    gender === "female"
+                      ? "border-[#FF6347] bg-[#FF6347]/10 text-[#FF6347]"
+                      : "border-[#F0DFD0] text-[#7A5C4D] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]"
+                  }`}
+                >
+                  <Venus className="w-4 h-4" />
+                  여성
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender("male")}
+                  className={`flex items-center justify-center gap-2 h-12 rounded-xl border-2 transition-all font-medium text-sm ${
+                    gender === "male"
+                      ? "border-[#5A9F7C] bg-[#5A9F7C]/10 text-[#5A9F7C]"
+                      : "border-[#F0DFD0] text-[#7A5C4D] hover:border-[#5A9F7C]/50 hover:bg-[#FFF8F4]"
+                  }`}
+                >
+                  <Mars className="w-4 h-4" />
+                  남성
+                </button>
+              </div>
+            </div>
+
             {/* MBTI Select */}
             <div>
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
@@ -201,83 +233,15 @@ export default function SignupPage() {
               <p className="text-xs text-[#7A5C4D] mt-1">나중에 설정해도 괜찮아요</p>
             </div>
 
-            {/* Checkboxes */}
-            <div className="space-y-3 pt-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <div className="relative flex-shrink-0 mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="appearance-none w-5 h-5 border-2 border-[#F0DFD0] rounded bg-white checked:bg-[#FF6347] checked:border-[#FF6347] transition-all cursor-pointer"
-                  />
-                  {termsAccepted && (
-                    <Check className="absolute top-0.5 left-0.5 w-4 h-4 text-white pointer-events-none" />
-                  )}
-                </div>
-                <span className="text-sm text-[#1F1410]">
-                  이용약관 및 개인정보처리방침에 동의합니다 (필수)
-                </span>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <div className="relative flex-shrink-0 mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={marketingAccepted}
-                    onChange={(e) => setMarketingAccepted(e.target.checked)}
-                    className="appearance-none w-5 h-5 border-2 border-[#F0DFD0] rounded bg-white checked:bg-[#FF6347] checked:border-[#FF6347] transition-all cursor-pointer"
-                  />
-                  {marketingAccepted && (
-                    <Check className="absolute top-0.5 left-0.5 w-4 h-4 text-white pointer-events-none" />
-                  )}
-                </div>
-                <span className="text-sm text-[#1F1410]">
-                  마케팅 수신에 동의합니다 (선택)
-                </span>
-              </label>
-            </div>
-
             {/* Signup Button */}
             <Link
-              to={termsAccepted ? "/signup/attachment-survey" : "#"}
-              onClick={(e) => !termsAccepted && e.preventDefault()}
-              className={`
-                block w-full h-[52px] text-center leading-[52px] rounded-full font-medium transition-all
-                ${termsAccepted
-                  ? 'bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)] cursor-pointer'
-                  : 'bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed opacity-50'
-                }
-              `}
+              to="/signup/attachment-survey"
+              className="block w-full h-[52px] text-center leading-[52px] rounded-full font-medium transition-all bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)]"
             >
               다음: 애착 유형 검사
             </Link>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-            <span className="text-sm text-[#7A5C4D]">또는</span>
-            <div className="flex-1 h-[1px] bg-[#F0DFD0]" />
-          </div>
-
-          {/* Social Signup */}
-          <div className="space-y-3">
-            <Link
-              to="/signup/attachment-survey"
-              className="w-full h-[48px] border-2 border-[#FEE500] bg-[#FEE500] text-[#000000] rounded-xl hover:bg-[#FEE500]/90 transition-all flex items-center justify-center gap-2"
-            >
-              <span>🟡</span>
-              카카오로 시작하기
-            </Link>
-            <Link
-              to="/signup/attachment-survey"
-              className="w-full h-[48px] border-2 border-[#F0DFD0] bg-white text-[#1F1410] rounded-xl hover:bg-[#FFE0CC] transition-all flex items-center justify-center gap-2"
-            >
-              <span>⬜</span>
-              구글로 시작하기
-            </Link>
-          </div>
         </div>
       </div>
     </div>

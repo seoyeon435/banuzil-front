@@ -8,10 +8,10 @@ export default function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#FFF8F4] border-b border-[#F0DFD0]">
         <div className="max-w-[1440px] mx-auto px-12 h-[72px] flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="text-2xl">🧵</span>
             <span className="text-xl font-bold text-[#1F1410]">바느질</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-3">
             <Link
               to="/mypage/profile"
@@ -119,10 +119,10 @@ export default function LandingPage() {
                 🫂
               </div>
               <h3 className="text-2xl font-semibold text-[#1F1410] mb-3">
-                MBTI 기반 공감
+                애착유형 기반 감정 분석
               </h3>
               <p className="text-[#7A5C4D] leading-[1.7]">
-                당신의 MBTI 성향을 깊이 이해하고,
+                당신의 애착 성향을 깊이 이해하고,
                 <br />
                 감정의 원인을 정확하게 짚어드려요
               </p>
@@ -211,9 +211,9 @@ export default function LandingPage() {
                 </div>
                 <div className="text-4xl mb-4">AI 분석</div>
                 <p className="text-[#7A5C4D] leading-[1.7]">
-                  MBTI 기반으로
+                  EFT 흐름에 따라
                   <br />
-                  두 사람을 분석해요
+                  감정과 욕구를 분석해요
                 </p>
               </div>
 
