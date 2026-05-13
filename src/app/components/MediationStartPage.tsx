@@ -5,37 +5,37 @@ export default function MediationStartPage() {
     <div className="min-h-screen bg-[#FFF8F4] flex items-center justify-center py-12">
       <div className="w-full max-w-[640px] px-6">
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-2 mb-12 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#FF6347] text-white flex items-center justify-center text-sm font-bold">
+        <div className="flex items-center justify-center gap-2 mb-12 flex-nowrap overflow-x-auto whitespace-nowrap">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#FF6347] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
               ①
             </div>
             <span className="text-[#FF6347] font-medium">갈등 시작</span>
           </div>
-          <div className="w-8 h-[2px] bg-[#F0DFD0]" />
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
+          <div className="w-8 h-[2px] bg-[#F0DFD0] flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold flex-shrink-0">
               ②
             </div>
             <span className="text-[#7A5C4D]">나의 입장 입력</span>
           </div>
-          <div className="w-8 h-[2px] bg-[#F0DFD0]" />
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
+          <div className="w-8 h-[2px] bg-[#F0DFD0] flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold flex-shrink-0">
               ③
             </div>
             <span className="text-[#7A5C4D]">상대방 대기</span>
           </div>
-          <div className="w-8 h-[2px] bg-[#F0DFD0]" />
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
+          <div className="w-8 h-[2px] bg-[#F0DFD0] flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold flex-shrink-0">
               ④
             </div>
             <span className="text-[#7A5C4D]">AI 분석</span>
           </div>
-          <div className="w-8 h-[2px] bg-[#F0DFD0]" />
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold">
+          <div className="w-8 h-[2px] bg-[#F0DFD0] flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#F0DFD0] text-[#7A5C4D] flex items-center justify-center text-sm font-bold flex-shrink-0">
               ⑤
             </div>
             <span className="text-[#7A5C4D]">완료</span>

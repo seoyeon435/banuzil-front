@@ -1,100 +1,102 @@
-import { Link, useNavigate } from "react-router";
-import { AlertTriangle, Send } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useState, useRef, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 
-// ── 라운드 정의 ──────────────────────────────────────────
-const rounds = [
+type RoundPhase = "input" | "waiting_partner" | "both_submitted";
+
+interface CompletedRound {
+  roundIdx: number;
+  myAnswer: string;
+  partnerAnswer: string;
+}
+
+const ROUNDS = [
   {
     label: "사건 정리",
     emoji: "📋",
-    questions: ["이 갈등에서 가장 중요하다고 느낀 사건은 무엇인가요?"],
-    aiAnalysis: (answer: string) =>
-      `"${answer.slice(0, 30)}${answer.length > 30 ? "..." : ""}" — 이번 갈등은 표면적으로는 연락 문제처럼 보이지만, 실제로는 서로의 기대가 어긋난 상황으로 보여요. 두 분 모두 관계에 진심이기에 생긴 갈등이에요.`,
+    aiQuestion: "이번 갈등에서 가장 중요하다고 느낀 장면은 무엇인가요?",
+    mockPartnerAnswer: "여행이 싫었던 게 아니라 시험 준비로 지쳐서 쉬고 싶었어.",
+    mockAnalysis:
+      "여자친구는 기대가 무너진 서운함을 느꼈고, 남자친구는 자신의 피로가 거절로 받아들여진 것에 미안함을 느끼고 있어요.",
+    nextLabel: "다음 라운드로 이어가기",
   },
   {
     label: "감정 확인",
     emoji: "💛",
-    questions: [
-      "그 순간 가장 크게 느낀 감정은 무엇이었나요?",
-      "상대에게 가장 바랐던 반응은 무엇인가요?",
-    ],
-    aiAnalysis: (answer: string) =>
-      `"${answer.slice(0, 30)}${answer.length > 30 ? "..." : ""}" — 답변을 보면 핵심 감정은 단순한 화가 아니라, 서운함과 불안에 가까워 보여요. 상대방에게 인정받고 싶은 욕구가 채워지지 않았을 때 나오는 반응이에요.`,
+    aiQuestion: "그 순간 가장 크게 느낀 감정은 무엇이었나요?",
+    mockPartnerAnswer: "내가 힘든 상황을 이해받지 못하는 것 같아서 답답했어.",
+    mockAnalysis:
+      "여자친구의 핵심 감정은 서운함과 불안, 남자친구의 핵심 감정은 부담감과 답답함에 가까워 보여요.",
+    nextLabel: "더 이야기하기",
   },
   {
     label: "관계 패턴 분석",
     emoji: "🔄",
-    questions: [
-      "이런 갈등이 이전에도 반복된 적이 있나요?",
-      "갈등 상황에서 나는 다가가는 편인가요, 피하는 편인가요?",
-    ],
-    aiAnalysis: (answer: string) =>
-      `"${answer.slice(0, 30)}${answer.length > 30 ? "..." : ""}" — 두 사람 사이에는 한쪽은 확인받고 싶어 다가가고, 다른 한쪽은 부담을 느껴 물러나는 패턴이 생길 수 있어요. 이건 두 분의 애착유형 차이에서 비롯된 자연스러운 반응이에요.`,
+    aiQuestion: "이런 갈등이 이전에도 반복된 적이 있나요?",
+    mockPartnerAnswer: "나는 압박을 느끼면 잠깐 피하고 싶어지는 편이야.",
+    mockAnalysis:
+      "두 사람 사이에는 한쪽은 확인받고 싶어 다가가고, 다른 한쪽은 부담을 느껴 물러나는 패턴이 반복될 수 있어요.",
+    nextLabel: "대화 문장 만들기",
   },
   {
     label: "대화 문장 만들기",
     emoji: "✍️",
-    questions: ["상대에게 안전하게 전달하고 싶은 말을 적어주세요."],
-    aiAnalysis: (answer: string) =>
-      `"${answer.slice(0, 30)}${answer.length > 30 ? "..." : ""}" — 이 표현을 비난이 아니라 감정 중심 문장으로 바꿔볼게요.\n\n💬 "${answer.includes("화") || answer.includes("답장") ? "답이 없을 때 내가 혼자 남겨진 것 같아서 불안했어." : "네 입장을 더 알고 싶었는데 전달이 잘 안 됐던 것 같아. 미안해."}"`,
+    aiQuestion: "상대에게 안전하게 전달하고 싶은 말을 적어주세요.",
+    mockPartnerAnswer: "내가 쉬고 싶었던 마음을 먼저 설명하지 못해서 미안해.",
+    mockAnalysis:
+      "두 사람 모두 상대를 탓하기보다 자신의 감정과 필요를 설명하는 방식으로 대화를 이어갈 수 있어요.",
+    nextLabel: null,
   },
 ];
-
-type MessageItem =
-  | { role: "ai-question"; roundIdx: number; text: string }
-  | { role: "user"; roundIdx: number; text: string }
-  | { role: "ai-analysis"; roundIdx: number; text: string };
 
 export default function MediationResultPage() {
   const navigate = useNavigate();
   const [currentRound, setCurrentRound] = useState(0);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<MessageItem[]>([
-    { role: "ai-question", roundIdx: 0, text: rounds[0].questions.join("\n") },
-  ]);
-  const [isComplete, setIsComplete] = useState(false);
+  const [roundPhase, setRoundPhase] = useState<RoundPhase>("input");
+  const [myInput, setMyInput] = useState("");
+  const [savedMyInput, setSavedMyInput] = useState("");
+  const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // 한 라운드 이상 완료했는지 (중간 종료 버튼 표시 조건)
-  const canEarlyExit = currentRound >= 1 && !isComplete;
+  const temperature = Math.max(38, 75 - completedRounds.length * 10);
+  const isLastRound = currentRound === ROUNDS.length - 1;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [roundPhase, completedRounds.length, currentRound]);
+
+  const handleSubmitMyAnswer = () => {
+    if (myInput.trim().length === 0) return;
+    setSavedMyInput(myInput.trim());
+    setMyInput("");
+    setRoundPhase("waiting_partner");
+  };
+
+  const handleLoadPartner = () => {
+    setRoundPhase("both_submitted");
+  };
+
+  const handleNextRound = () => {
+    setCompletedRounds((prev) => [
+      ...prev,
+      {
+        roundIdx: currentRound,
+        myAnswer: savedMyInput,
+        partnerAnswer: ROUNDS[currentRound].mockPartnerAnswer,
+      },
+    ]);
+    setCurrentRound((r) => r + 1);
+    setRoundPhase("input");
+    setSavedMyInput("");
+  };
+
+  const handleComplete = () => {
+    navigate("/mediation/complete");
+  };
 
   const handleEarlyExit = () => {
     navigate("/mediation/complete", { state: { earlyExit: true } });
   };
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSubmit = () => {
-    if (input.trim().length === 0) return;
-
-    const userMsg: MessageItem = { role: "user", roundIdx: currentRound, text: input.trim() };
-    const aiMsg: MessageItem = {
-      role: "ai-analysis",
-      roundIdx: currentRound,
-      text: rounds[currentRound].aiAnalysis(input.trim()),
-    };
-
-    const nextRound = currentRound + 1;
-    const newMessages: MessageItem[] = [...messages, userMsg, aiMsg];
-
-    if (nextRound < rounds.length) {
-      newMessages.push({
-        role: "ai-question",
-        roundIdx: nextRound,
-        text: rounds[nextRound].questions.join("\n"),
-      });
-      setCurrentRound(nextRound);
-    } else {
-      setIsComplete(true);
-    }
-
-    setMessages(newMessages);
-    setInput("");
-  };
-
-  const temperature = 62;
 
   return (
     <div className="min-h-screen bg-[#FFF8F4] flex">
@@ -105,17 +107,44 @@ export default function MediationResultPage() {
         {/* Round Progress */}
         <div className="bg-white rounded-xl p-4 mb-5 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
           <div className="text-sm font-semibold text-[#FF6347] mb-3">
-            {isComplete ? "모든 라운드 완료 ✓" : `${currentRound + 1}라운드 진행중`}
+            {currentRound + 1}라운드 / 4라운드
           </div>
           <div className="space-y-2">
-            {rounds.map((r, i) => {
-              const isDone = i < currentRound || (isComplete && i === currentRound);
-              const isCurrent = i === currentRound && !isComplete;
+            {ROUNDS.map((r, i) => {
+              const isDone = i < currentRound;
+              const isCurrent = i === currentRound;
+              const phaseLabel =
+                isCurrent && roundPhase === "input"
+                  ? " · 입력 중"
+                  : isCurrent && roundPhase === "waiting_partner"
+                  ? " · 상대방 대기"
+                  : isCurrent && roundPhase === "both_submitted"
+                  ? " · 분석 완료"
+                  : "";
               return (
                 <div key={i} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? "bg-[#5A9F7C]" : isCurrent ? "bg-[#FF6347]" : "bg-[#F0DFD0]"}`} />
-                  <span className={`text-xs ${isDone ? "text-[#5A9F7C] line-through" : isCurrent ? "text-[#1F1410] font-semibold" : "text-[#7A5C4D]"}`}>
+                  <div
+                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      isDone
+                        ? "bg-[#5A9F7C]"
+                        : isCurrent
+                        ? "bg-[#FF6347]"
+                        : "bg-[#F0DFD0]"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs leading-tight ${
+                      isDone
+                        ? "text-[#5A9F7C] line-through"
+                        : isCurrent
+                        ? "text-[#1F1410] font-semibold"
+                        : "text-[#7A5C4D]"
+                    }`}
+                  >
                     {r.emoji} {r.label}
+                    {isCurrent && (
+                      <span className="text-[#FF6347]">{phaseLabel}</span>
+                    )}
                   </span>
                 </div>
               );
@@ -174,142 +203,279 @@ export default function MediationResultPage() {
         </div>
 
         <div className="flex-1" />
-        <button className="w-full py-3 border-2 border-[#DC3545] text-[#DC3545] rounded-full hover:bg-[#FFE0E0] transition-all text-sm">
+        <button
+          onClick={handleEarlyExit}
+          className="w-full py-3 border-2 border-[#DC3545] text-[#DC3545] rounded-full hover:bg-[#FFE0E0] transition-all text-sm"
+        >
           중재 종료하기
         </button>
       </div>
 
-      {/* ── 중앙: 대화 타임라인 ───────────────────── */}
+      {/* ── 중앙: 라운드 타임라인 ───────────────────── */}
       <div className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-[680px] mx-auto space-y-5">
-          {/* Header */}
+        <div className="max-w-[700px] mx-auto space-y-6">
+
+          {/* 도입 배너 */}
           <div className="bg-[#FF6347]/5 border-l-4 border-[#FF6347] rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🧵</span>
               <span className="font-semibold text-[#1F1410]">바느질 AI</span>
             </div>
-            <p className="text-[#1F1410]">
-              두 분의 이야기를 들었어요. EFT 상담 흐름에 따라 단계별로 함께 정리해 드릴게요.
+            <p className="text-[#1F1410] text-sm leading-relaxed">
+              두 분이 연결되었어요. EFT 상담 흐름에 따라 4라운드로 나눠 함께 이야기 나눠볼게요.
+              각 라운드마다 두 분의 답변을 받아 AI가 중립적으로 분석해드립니다.
             </p>
           </div>
 
-          {/* Partner view (blurred) */}
-          <div className="bg-white rounded-xl p-5 relative overflow-hidden shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
-            <div className="text-sm font-semibold text-[#7A5C4D] mb-2">[남자친구 입장 — AI 정리본]</div>
-            <div className="blur-sm select-none text-[#7A5C4D] text-sm">
-              남자친구는 사실 여행을 가고 싶었던 게 도피가 아니라 재충전이 필요했던 거였어요...
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-              <div className="flex items-center gap-2 text-[#7A5C4D]">
-                <span className="text-xl">🔒</span>
-                <span className="text-sm font-medium">남자친구에게만 표시됩니다</span>
-              </div>
-            </div>
-          </div>
+          {/* ── 완료된 라운드 카드들 ── */}
+          {completedRounds.map((cr) => {
+            const round = ROUNDS[cr.roundIdx];
+            return (
+              <div
+                key={cr.roundIdx}
+                className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(255,99,71,0.1)] overflow-hidden border border-[#5A9F7C]/30"
+              >
+                {/* 라운드 헤더 */}
+                <div className="bg-[#E0F4E8] px-6 py-3 flex items-center gap-3">
+                  <span className="text-xl">{round.emoji}</span>
+                  <span className="font-semibold text-[#1F1410] text-sm">
+                    {cr.roundIdx + 1}라운드 — {round.label}
+                  </span>
+                  <span className="ml-auto text-[#5A9F7C] text-xs font-semibold">✓ 완료</span>
+                </div>
 
-          {/* Messages */}
-          {messages.map((msg, i) => {
-            if (msg.role === "ai-question") {
-              return (
-                <div key={i} className="bg-[#FF6347]/5 border-l-4 border-[#FF6347] rounded-xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xl">🧵</span>
-                    <span className="font-semibold text-[#1F1410]">
-                      {rounds[msg.roundIdx].emoji} {msg.roundIdx + 1}라운드 — {rounds[msg.roundIdx].label}
-                    </span>
-                  </div>
-                  {msg.text.split("\n").map((q, qi) => (
-                    <p key={qi} className="text-[#1F1410] mb-1">
-                      {msg.text.split("\n").length > 1 ? `Q${qi + 1}. ` : ""}{q}
-                    </p>
-                  ))}
-                </div>
-              );
-            }
-            if (msg.role === "user") {
-              return (
-                <div key={i} className="flex justify-end">
-                  <div className="max-w-[80%] bg-white border-2 border-[#FF6347]/20 rounded-xl px-5 py-4 shadow-[0_2px_8px_rgba(255,99,71,0.1)]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full bg-[#FFB89A] flex items-center justify-center text-xs font-bold text-[#1F1410]">
-                        박
+                <div className="p-6 space-y-4">
+                  {/* AI 질문 */}
+                  <p className="text-sm text-[#7A5C4D]">
+                    <span className="font-medium text-[#1F1410]">AI 질문: </span>
+                    {round.aiQuestion}
+                  </p>
+
+                  {/* 두 사람의 답변 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-[#FFF8F4] rounded-xl p-4 border border-[#FF6347]/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
+                          여
+                        </div>
+                        <span className="text-xs font-medium text-[#1F1410]">여자친구의 답변</span>
+                        <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
                       </div>
-                      <span className="text-xs text-[#7A5C4D]">나의 답변</span>
+                      <p className="text-xs text-[#7A5C4D] leading-relaxed">{cr.myAnswer}</p>
                     </div>
-                    <p className="text-[#1F1410] text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                    <div className="bg-[#FFF8F4] rounded-xl p-4 border border-[#D4956A]/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
+                          남
+                        </div>
+                        <span className="text-xs font-medium text-[#1F1410]">남자친구의 답변</span>
+                        <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
+                      </div>
+                      <p className="text-xs text-[#7A5C4D] leading-relaxed">{cr.partnerAnswer}</p>
+                    </div>
+                  </div>
+
+                  {/* AI 분석 */}
+                  <div className="bg-[#FFE9DD] border-l-4 border-[#D4956A] rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-base">💡</span>
+                      <span className="font-semibold text-[#1F1410] text-xs">AI 분석</span>
+                    </div>
+                    <p className="text-xs text-[#1F1410] leading-relaxed">{round.mockAnalysis}</p>
                   </div>
                 </div>
-              );
-            }
-            if (msg.role === "ai-analysis") {
-              return (
-                <div key={i} className="bg-[#FFE9DD] border-l-4 border-[#D4956A] rounded-xl p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">💡</span>
-                    <span className="font-semibold text-[#1F1410] text-sm">AI 재분석</span>
-                  </div>
-                  <p className="text-[#1F1410] text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                </div>
-              );
-            }
-            return null;
+              </div>
+            );
           })}
 
-          {/* Input */}
-          {!isComplete && (
-            <div className="bg-white rounded-xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)]">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm font-medium text-[#1F1410]">
-                  {rounds[currentRound].emoji} {currentRound + 1}라운드 답변 입력
-                </span>
+          {/* ── 현재 진행 중인 라운드 ── */}
+          <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(255,99,71,0.17)] overflow-hidden">
+            {/* 라운드 헤더 */}
+            <div className="bg-[#FF6347]/10 px-6 py-4 flex items-center gap-3 border-b border-[#FF6347]/20">
+              <span className="text-2xl">{ROUNDS[currentRound].emoji}</span>
+              <div>
+                <p className="font-semibold text-[#1F1410]">
+                  {currentRound + 1}라운드 — {ROUNDS[currentRound].label}
+                </p>
+                <p className="text-xs text-[#FF6347]">
+                  {roundPhase === "input" && "여자친구 답변 입력 중"}
+                  {roundPhase === "waiting_partner" && "남자친구 답변 대기 중"}
+                  {roundPhase === "both_submitted" && "두 사람의 답변 완료 · AI 분석 완료"}
+                </p>
               </div>
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="여기에 솔직하게 적어주세요..."
-                className="w-full h-[100px] p-4 bg-[#FFF8F4] border-2 border-[#F0DFD0] rounded-xl focus:outline-none focus:border-[#FF6347] resize-none text-[#1F1410] text-sm"
-              />
-              <div className="flex gap-3 mt-3">
-                <button
-                  onClick={handleSubmit}
-                  disabled={input.trim().length === 0}
-                  className={`flex-1 py-3 rounded-full font-medium transition-all flex items-center justify-center gap-2 ${
-                    input.trim().length > 0
-                      ? "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
-                      : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
-                  }`}
-                >
-                  <Send className="w-4 h-4" />
-                  답변 제출하기
-                </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* AI 질문 */}
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#FF6347]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-base">🧵</span>
+                </div>
+                <div className="flex-1 bg-[#FF6347]/5 rounded-xl p-4">
+                  <p className="text-xs text-[#7A5C4D] mb-1">AI 질문</p>
+                  <p className="text-sm font-medium text-[#1F1410]">
+                    {ROUNDS[currentRound].aiQuestion}
+                  </p>
+                </div>
               </div>
 
-              {/* 중간 종료 버튼 — 1라운드 이상 완료 시 표시 */}
-              {canEarlyExit && (
-                <button
-                  onClick={handleEarlyExit}
-                  className="w-full mt-3 py-2.5 border-2 border-[#D4956A] text-[#D4956A] rounded-full hover:bg-[#FFE9DD] transition-all text-sm font-medium"
-                >
-                  여기까지 정리하고 결과 보기
-                </button>
+              {/* ── 입력 단계 ── */}
+              {roundPhase === "input" && (
+                <div>
+                  <p className="text-xs text-[#7A5C4D] mb-2 flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold inline-flex flex-shrink-0">여</span>
+                    여자친구의 답변을 입력해주세요
+                  </p>
+                  <textarea
+                    value={myInput}
+                    onChange={(e) => setMyInput(e.target.value)}
+                    placeholder="솔직하게 느낀 점을 적어주세요..."
+                    className="w-full h-[100px] p-4 bg-[#FFF8F4] border-2 border-[#F0DFD0] rounded-xl focus:outline-none focus:border-[#FF6347] resize-none text-[#1F1410] text-sm"
+                  />
+                  <button
+                    onClick={handleSubmitMyAnswer}
+                    disabled={myInput.trim().length === 0}
+                    className={`w-full mt-3 py-3 rounded-full font-medium transition-all text-sm ${
+                      myInput.trim().length > 0
+                        ? "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
+                        : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
+                    }`}
+                  >
+                    답변 제출하기
+                  </button>
+                  {completedRounds.length >= 1 && (
+                    <button
+                      onClick={handleEarlyExit}
+                      className="w-full mt-3 py-2.5 border-2 border-[#D4956A] text-[#D4956A] rounded-full hover:bg-[#FFE9DD] transition-all text-sm font-medium"
+                    >
+                      여기까지 정리하고 결과 보기
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* ── 상대방 대기 단계 ── */}
+              {roundPhase === "waiting_partner" && (
+                <div className="space-y-4">
+                  {/* 내 답변 카드 */}
+                  <div className="bg-[#FFF8F4] border border-[#FF6347]/20 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
+                        여
+                      </div>
+                      <span className="text-sm font-medium text-[#1F1410]">여자친구의 답변</span>
+                      <span className="ml-auto px-2 py-0.5 bg-[#E0F4E8] text-[#5A9F7C] text-xs rounded-full">
+                        ✓ 저장 완료
+                      </span>
+                    </div>
+                    <p className="text-sm text-[#7A5C4D] leading-relaxed">{savedMyInput}</p>
+                  </div>
+
+                  {/* 상대방 대기 카드 */}
+                  <div className="bg-[#FFF8F4] border border-[#D4956A]/30 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#D4956A] flex items-center justify-center flex-shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-[#D4956A] animate-pulse" />
+                      </div>
+                      <span className="text-sm font-medium text-[#1F1410]">남자친구의 답변</span>
+                      <span className="ml-auto px-2 py-0.5 bg-[#FFE9DD] text-[#D4956A] text-xs rounded-full">
+                        대기 중...
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-full" />
+                      <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-5/6" />
+                      <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-3/4" />
+                    </div>
+                    <p className="text-xs text-[#7A5C4D] mt-3">남자친구가 답변을 작성하고 있어요.</p>
+                  </div>
+
+                  {/* 시연용 버튼 */}
+                  <div className="bg-[#FFE9DD] border border-[#FFD19A] rounded-xl p-4">
+                    <p className="text-xs font-semibold text-[#1F1410] mb-2">
+                      시연용 — 실제 서비스에서는 남자친구가 직접 입력합니다
+                    </p>
+                    <button
+                      onClick={handleLoadPartner}
+                      className="w-full py-3 bg-[#D4956A] text-white rounded-full hover:bg-[#C47D52] transition-all font-medium text-sm"
+                    >
+                      남자친구 답변 불러오기
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 두 답변 모두 제출 / AI 분석 단계 ── */}
+              {roundPhase === "both_submitted" && (
+                <div className="space-y-4">
+                  {/* 두 사람 답변 카드 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-[#FFF8F4] border border-[#FF6347]/20 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
+                          여
+                        </div>
+                        <span className="text-xs font-medium text-[#1F1410]">여자친구의 답변</span>
+                        <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
+                      </div>
+                      <p className="text-xs text-[#7A5C4D] leading-relaxed">{savedMyInput}</p>
+                    </div>
+                    <div className="bg-[#FFF8F4] border border-[#D4956A]/20 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
+                          남
+                        </div>
+                        <span className="text-xs font-medium text-[#1F1410]">남자친구의 답변</span>
+                        <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
+                      </div>
+                      <p className="text-xs text-[#7A5C4D] leading-relaxed">
+                        {ROUNDS[currentRound].mockPartnerAnswer}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* AI 분석 카드 */}
+                  <div className="bg-[#FFE9DD] border-l-4 border-[#D4956A] rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">💡</span>
+                      <span className="font-semibold text-[#1F1410] text-sm">AI 분석</span>
+                      <span className="text-xs text-[#7A5C4D] ml-1">두 사람의 답변을 함께 분석했어요</span>
+                    </div>
+                    <p className="text-sm text-[#1F1410] leading-relaxed">
+                      {ROUNDS[currentRound].mockAnalysis}
+                    </p>
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="flex flex-col gap-3">
+                    {!isLastRound ? (
+                      <>
+                        <button
+                          onClick={handleNextRound}
+                          className="w-full py-3 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all font-medium text-sm shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
+                        >
+                          {ROUNDS[currentRound].nextLabel} →
+                        </button>
+                        <button
+                          onClick={handleEarlyExit}
+                          className="w-full py-2.5 border-2 border-[#D4956A] text-[#D4956A] rounded-full hover:bg-[#FFE9DD] transition-all text-sm font-medium"
+                        >
+                          여기까지 정리하고 결과 보기
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleComplete}
+                        className="w-full py-3 bg-[#5A9F7C] text-white rounded-full hover:bg-[#4d8f6d] transition-all font-medium shadow-[0_4px_16px_rgba(90,159,124,0.3)]"
+                      >
+                        최종 중재 결과 보기 →
+                      </button>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
-          )}
-
-          {/* Complete CTA */}
-          {isComplete && (
-            <div className="bg-[#E0F4E8] border-2 border-[#5A9F7C] rounded-xl p-6 text-center">
-              <p className="text-xl mb-2">🎉</p>
-              <p className="font-semibold text-[#1F1410] mb-1">모든 라운드가 완료되었어요!</p>
-              <p className="text-sm text-[#7A5C4D] mb-5">최종 중재 결과를 확인해보세요.</p>
-              <Link
-                to="/mediation/complete"
-                className="inline-block px-10 py-3 bg-[#5A9F7C] text-white rounded-full hover:bg-[#4d8f6d] transition-all font-medium"
-              >
-                최종 중재 결과 보기 →
-              </Link>
-            </div>
-          )}
+          </div>
 
           <div ref={bottomRef} />
         </div>
@@ -321,7 +487,9 @@ export default function MediationResultPage() {
 
         <div className="bg-[#FFE9DD] rounded-xl p-4 mb-4">
           <p className="text-sm font-semibold text-[#1F1410] mb-2">💡 공통점 발견</p>
-          <p className="text-sm text-[#7A5C4D]">결국 둘 다 원하는 건 같아요 — 서로에게 인정받고 싶은 마음</p>
+          <p className="text-sm text-[#7A5C4D]">
+            결국 둘 다 원하는 건 같아요 — 서로에게 인정받고 싶은 마음
+          </p>
         </div>
 
         <div className="bg-[#FF6347]/5 rounded-xl p-4 mb-4">
