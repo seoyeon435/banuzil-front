@@ -99,7 +99,7 @@ export default function MediationResultPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-72px)] bg-[#FFF8F4] flex">
+    <div className="min-h-screen bg-[#FFF8F4] flex">
       {/* ── 좌측: 상태 패널 ──────────────────────── */}
       <div className="w-[280px] bg-[#FFE0CC] p-6 flex flex-col flex-shrink-0">
         <h2 className="text-lg font-semibold text-[#1F1410] mb-5">중재 진행 상황</h2>

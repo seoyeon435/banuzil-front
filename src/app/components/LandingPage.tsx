@@ -4,7 +4,37 @@ import StitchDivider from "./ui/StitchDivider";
 
 export default function LandingPage() {
   return (
-    <div className="bg-[#FFF8F4]">
+    <div className="min-h-screen bg-[#FFF8F4]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#FFF8F4] border-b border-[#F0DFD0]">
+        <div className="max-w-[1440px] mx-auto px-12 h-[72px] flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <span className="text-2xl">🧵</span>
+            <span className="text-xl font-bold text-[#1F1410]">바느질</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/mypage/profile"
+              className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
+            >
+              마이페이지
+            </Link>
+            <Link
+              to="/login"
+              className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
+            >
+              로그인
+            </Link>
+            <Link
+              to="/signup"
+              className="px-8 py-3 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-colors"
+            >
+              시작하기
+            </Link>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative min-h-[calc(100vh-72px)] flex items-center justify-center bg-[#FFE9DD] overflow-hidden">
         {/* Decorative Background Pattern */}

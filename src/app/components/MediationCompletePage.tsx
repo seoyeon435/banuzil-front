@@ -9,7 +9,7 @@ export default function MediationCompletePage() {
   return (
     <>
       <MediationProgressHeader currentStep="complete" />
-      <div className="min-h-[calc(100vh-72px-78px)] bg-[#FFF8F4] py-12 px-6">
+      <div className="min-h-screen bg-[#FFF8F4] py-12 px-6">
       <div className="max-w-[820px] mx-auto">
         {/* Early Exit Banner */}
         {isEarlyExit && (

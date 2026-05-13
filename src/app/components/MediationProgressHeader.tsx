@@ -16,11 +16,8 @@ export default function MediationProgressHeader({ currentStep }: Props) {
   const currentIdx = STEPS.findIndex((s) => s.key === currentStep);
 
   return (
-    <div className="bg-white border-b border-[#F0DFD0] px-6 py-4">
+    <div className="bg-[#FFF8F4] px-6 py-5">
       <div className="max-w-[900px] mx-auto">
-        <p className="text-xs text-[#FF6347] font-semibold mb-3 uppercase tracking-wider">
-          AI 갈등 중재 진행 단계
-        </p>
         <div className="grid grid-cols-5 gap-3">
           {STEPS.map((step, i) => {
             const isDone = i < currentIdx;

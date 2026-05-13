@@ -6,7 +6,7 @@ export default function MediationStartPage() {
     <>
       <MediationProgressHeader currentStep="start" />
 
-      <div className="bg-[#FFF8F4] flex items-center justify-center py-12 px-6 min-h-[calc(100vh-72px-78px)]">
+      <div className="bg-[#FFF8F4] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[640px]">
           {/* Heading */}
           <h1 className="text-[36px] font-semibold text-[#1F1410] text-center mb-4">
