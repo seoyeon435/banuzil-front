@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -80,16 +80,16 @@ export default function LoginPage() {
 
           {/* Form */}
           <form className="space-y-4">
-            {/* Email Input */}
+            {/* ID Input */}
             <div>
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
-                이메일
+                아이디
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
-                  type="email"
-                  placeholder="이메일 주소를 입력해주세요"
+                  type="text"
+                  placeholder="아이디를 입력해주세요"
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>

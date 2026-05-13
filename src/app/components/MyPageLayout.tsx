@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { User, BarChart3, FileText, Heart, Settings, LogOut } from "lucide-react";
+import { User, BarChart3, FileText, Heart, LogOut } from "lucide-react";
 
 interface MyPageLayoutProps {
   children: React.ReactNode;
@@ -13,7 +13,6 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
     { path: "/mypage/statistics", icon: BarChart3, label: "갈등 통계", emoji: "📊" },
     { path: "/mypage/records", icon: FileText, label: "갈등 기록", emoji: "📋" },
     { path: "/mypage/our-space", icon: Heart, label: "둘만의 공간", emoji: "💑" },
-    { path: "/mypage/settings", icon: Settings, label: "설정", emoji: "⚙️" },
   ];
 
   return (

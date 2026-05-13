@@ -60,7 +60,7 @@ export default function FriendsPage() {
   if (step === "connected") {
     return (
       <MyPageLayout>
-        <div className="max-w-[1100px]">
+        <div className="max-w-[1100px] mx-auto w-full">
           {/* 연결 완료 배너 */}
           <div className="bg-gradient-to-r from-[#FF6347] to-[#E84028] rounded-2xl p-6 mb-8 text-white">
             <div className="flex items-center gap-4 mb-2">
@@ -201,12 +201,13 @@ export default function FriendsPage() {
   // ── 미연결 상태 ─────────────────────────────────────────
   return (
     <MyPageLayout>
-      <div className="max-w-[680px]">
+      <div className="w-full">
         <h1 className="text-[36px] font-semibold text-[#1F1410] mb-2">우리 공간</h1>
         <p className="text-[#7A5C4D] mb-10">
           연인과 연결되면 둘만의 갈등 중재 공간이 열려요.
         </p>
 
+        <div className="max-w-[680px] mx-auto w-full">
         {/* 연결 전 안내 */}
         {step === "none" && (
           <div className="bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6 text-center">
@@ -314,6 +315,7 @@ export default function FriendsPage() {
             ← 처음으로
           </button>
         )}
+        </div>
       </div>
     </MyPageLayout>
   );
