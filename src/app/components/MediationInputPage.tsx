@@ -40,7 +40,7 @@ export default function MediationInputPage() {
   // ── 상대방 대기 / 로드 완료 화면 ──────────────────────────────
   if (phase !== "writing") {
     return (
-      <div className="min-h-screen bg-[#FFF8F4] flex items-center justify-center py-12 px-6">
+      <div className="min-h-[calc(100vh-72px)] bg-[#FFF8F4] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[760px]">
           {/* 진행 단계 */}
           <div className="flex items-center justify-center gap-2 mb-8 text-xs text-[#7A5C4D]">
@@ -150,7 +150,7 @@ export default function MediationInputPage() {
 
   // ── 입력 화면 ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="h-[calc(100vh-72px)] bg-white flex">
       {/* 왼쪽 패널 */}
       <div className="w-[380px] bg-[#FFE9DD] p-8 flex flex-col flex-shrink-0">
         {/* 연결 정보 */}

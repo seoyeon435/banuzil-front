@@ -1,12 +1,15 @@
 import { Link, useLocation } from "react-router";
 import { Download, Home, CheckCircle, MessageCircle, Heart } from "lucide-react";
+import MediationProgressHeader from "./MediationProgressHeader";
 
 export default function MediationCompletePage() {
   const location = useLocation();
   const isEarlyExit = (location.state as { earlyExit?: boolean })?.earlyExit ?? false;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F4] py-12 px-6">
+    <>
+      <MediationProgressHeader currentStep="complete" />
+      <div className="min-h-[calc(100vh-72px-78px)] bg-[#FFF8F4] py-12 px-6">
       <div className="max-w-[820px] mx-auto">
         {/* Early Exit Banner */}
         {isEarlyExit && (
@@ -225,5 +228,6 @@ export default function MediationCompletePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -38,7 +38,7 @@ export default function MediationAnalyzingPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#1F1410] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="min-h-[calc(100vh-72px)] bg-[#1F1410] flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Animated Background Glow */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-96 h-96 rounded-full bg-[#FF6347]/10 blur-3xl animate-pulse" />

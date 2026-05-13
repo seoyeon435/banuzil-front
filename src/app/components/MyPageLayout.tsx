@@ -17,9 +17,9 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFF8F4] flex">
-      {/* Left Sidebar */}
-      <aside className="w-[280px] bg-white border-r border-[#F0DFD0] fixed h-screen flex flex-col">
+    <div className="bg-[#FFF8F4] flex min-h-[calc(100vh-72px)]">
+      {/* Left Sidebar — sticky below global Navbar (72px) */}
+      <aside className="w-[280px] bg-white border-r border-[#F0DFD0] sticky top-[72px] h-[calc(100vh-72px)] flex flex-col flex-shrink-0 overflow-y-auto">
         {/* Logo/Home Link */}
         <Link to="/" className="p-6 border-b border-[#F0DFD0] hover:bg-[#FFF8F4] transition-colors">
           <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
       </aside>
 
       {/* Right Content Area */}
-      <main className="ml-[280px] flex-1 p-12">
+      <main className="flex-1 p-12">
         {children}
       </main>
     </div>
