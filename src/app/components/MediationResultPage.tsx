@@ -8,6 +8,7 @@ import {
   submitSewingRound,
   type SewingSession,
 } from "../../api/sewingApi";
+import { useDisplayNames } from "../utils/useDisplayNames";
 
 type RoundPhase = "input" | "waiting_partner" | "both_submitted";
 type SidePanel = "progress" | "insights" | null;
@@ -53,7 +54,7 @@ const ROUNDS = [
     aiQuestion: "이번 갈등에서 가장 중요하다고 느낀 장면은 무엇인가요?",
     mockPartnerAnswer: "여행이 싫었던 게 아니라 시험 준비로 지쳐서 쉬고 싶었어.",
     mockAnalysis:
-      "여자친구는 기대가 무너진 서운함을 느꼈고, 남자친구는 자신의 피로가 거절로 받아들여진 것에 미안함을 느끼고 있어요.",
+      "한 사람은 기대가 무너진 서운함을 느꼈고, 다른 한 사람은 자신의 피로가 거절로 받아들여진 것에 미안함을 느끼고 있어요.",
     nextLabel: "다음 라운드로 이어가기",
   },
   {
@@ -62,7 +63,7 @@ const ROUNDS = [
     aiQuestion: "그 순간 가장 크게 느낀 감정은 무엇이었나요?",
     mockPartnerAnswer: "내가 힘든 상황을 이해받지 못하는 것 같아서 답답했어.",
     mockAnalysis:
-      "여자친구의 핵심 감정은 서운함과 불안, 남자친구의 핵심 감정은 부담감과 답답함에 가까워 보여요.",
+      "두 사람의 핵심 감정은 각각 서운함과 불안, 부담감과 답답함에 가까워 보여요.",
     nextLabel: "더 이야기하기",
   },
   {
@@ -87,6 +88,7 @@ const ROUNDS = [
 
 export default function MediationResultPage() {
   const navigate = useNavigate();
+  const { currentName, currentInitial, partnerName, partnerInitial } = useDisplayNames();
   const [currentRound, setCurrentRound] = useState(0);
   const [roundPhase, setRoundPhase] = useState<RoundPhase>("input");
   const [myInput, setMyInput] = useState("");
@@ -314,8 +316,8 @@ export default function MediationResultPage() {
         <div className="bg-white rounded-xl p-4 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
           <div className="space-y-3">
             {[
-              { initial: "여", name: "나 (여자친구)", type: "안정형" },
-              { initial: "남", name: "남자친구", type: "불안형" },
+              { initial: currentInitial, name: `나 (${currentName})`, type: "안정형" },
+              { initial: partnerInitial, name: partnerName, type: "불안형" },
             ].map((p) => (
               <div key={p.name} className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold text-sm flex-shrink-0">
@@ -399,9 +401,9 @@ export default function MediationResultPage() {
                     <div className="bg-[#FFF8F4] rounded-xl p-4 border border-[#FF6347]/20">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
-                          여
+                          {currentInitial}
                         </div>
-                        <span className="text-xs font-medium text-[#1F1410]">여자친구의 답변</span>
+                        <span className="text-xs font-medium text-[#1F1410]">{currentName}의 답변</span>
                         <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
                       </div>
                       <p className="text-xs text-[#7A5C4D] leading-relaxed">{cr.myAnswer}</p>
@@ -409,9 +411,9 @@ export default function MediationResultPage() {
                     <div className="bg-[#FFF8F4] rounded-xl p-4 border border-[#D4956A]/20">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
-                          남
+                          {partnerInitial}
                         </div>
-                        <span className="text-xs font-medium text-[#1F1410]">남자친구의 답변</span>
+                        <span className="text-xs font-medium text-[#1F1410]">{partnerName}님의 답변</span>
                         <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
                       </div>
                       <p className="text-xs text-[#7A5C4D] leading-relaxed">{cr.partnerAnswer}</p>
@@ -441,8 +443,8 @@ export default function MediationResultPage() {
                   {currentRound + 1}라운드 — {ROUNDS[currentRound].label}
                 </p>
                 <p className="text-xs text-[#FF6347]">
-                  {roundPhase === "input" && "여자친구 답변 입력 중"}
-                  {roundPhase === "waiting_partner" && "남자친구 답변 대기 중"}
+                  {roundPhase === "input" && `${currentName} 답변 입력 중`}
+                  {roundPhase === "waiting_partner" && `${partnerName}님 답변 대기 중`}
                   {roundPhase === "both_submitted" && "두 사람의 답변 완료 · AI 분석 완료"}
                 </p>
               </div>
@@ -466,8 +468,8 @@ export default function MediationResultPage() {
               {roundPhase === "input" && (
                 <div>
                   <p className="text-xs text-[#7A5C4D] mb-2 flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold inline-flex flex-shrink-0">여</span>
-                    여자친구의 답변을 입력해주세요
+                    <span className="w-5 h-5 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold inline-flex flex-shrink-0">{currentInitial}</span>
+                    {currentName}의 답변을 입력해주세요
                   </p>
                   <textarea
                     value={myInput}
@@ -505,9 +507,9 @@ export default function MediationResultPage() {
                   <div className="bg-[#FFF8F4] border border-[#FF6347]/20 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
-                        여
+                        {currentInitial}
                       </div>
-                      <span className="text-sm font-medium text-[#1F1410]">여자친구의 답변</span>
+                      <span className="text-sm font-medium text-[#1F1410]">{currentName}의 답변</span>
                       <span className="ml-auto px-2 py-0.5 bg-[#E0F4E8] text-[#5A9F7C] text-xs rounded-full">
                         ✓ 저장 완료
                       </span>
@@ -521,7 +523,7 @@ export default function MediationResultPage() {
                       <div className="w-6 h-6 rounded-full border-2 border-[#D4956A] flex items-center justify-center flex-shrink-0">
                         <div className="w-2 h-2 rounded-full bg-[#D4956A] animate-pulse" />
                       </div>
-                      <span className="text-sm font-medium text-[#1F1410]">남자친구의 답변</span>
+                      <span className="text-sm font-medium text-[#1F1410]">{partnerName}님의 답변</span>
                       <span className="ml-auto px-2 py-0.5 bg-[#FFE9DD] text-[#D4956A] text-xs rounded-full">
                         대기 중...
                       </span>
@@ -531,7 +533,7 @@ export default function MediationResultPage() {
                       <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-5/6" />
                       <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-3/4" />
                     </div>
-                    <p className="text-xs text-[#7A5C4D] mt-3">남자친구가 답변을 작성하고 있어요.</p>
+                    <p className="text-xs text-[#7A5C4D] mt-3">{partnerName}님이 답변을 작성하고 있어요.</p>
                     {lastCheckedAt && (
                       <p className="text-xs text-[#7A5C4D] mt-1">마지막 확인: {lastCheckedAt}</p>
                     )}
@@ -549,7 +551,7 @@ export default function MediationResultPage() {
                       onClick={handleLoadPartner}
                       className="w-full py-3 bg-[#FFE0CC] text-[#1F1410] rounded-full hover:bg-[#F0DFD0] transition-all font-medium text-sm"
                     >
-                      개발용: 남자친구 답변 불러오기
+                      개발용: {partnerName}님 답변 불러오기
                     </button>
                   </details>
                 </div>
@@ -563,9 +565,9 @@ export default function MediationResultPage() {
                     <div className="bg-[#FFF8F4] border border-[#FF6347]/20 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
-                          여
+                          {currentInitial}
                         </div>
-                        <span className="text-xs font-medium text-[#1F1410]">여자친구의 답변</span>
+                        <span className="text-xs font-medium text-[#1F1410]">{currentName}의 답변</span>
                         <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
                       </div>
                       <p className="text-xs text-[#7A5C4D] leading-relaxed">{savedMyInput}</p>
@@ -573,9 +575,9 @@ export default function MediationResultPage() {
                     <div className="bg-[#FFF8F4] border border-[#D4956A]/20 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
-                          남
+                          {partnerInitial}
                         </div>
-                        <span className="text-xs font-medium text-[#1F1410]">남자친구의 답변</span>
+                        <span className="text-xs font-medium text-[#1F1410]">{partnerName}님의 답변</span>
                         <span className="ml-auto text-xs text-[#5A9F7C]">✓</span>
                       </div>
                       <p className="text-xs text-[#7A5C4D] leading-relaxed">

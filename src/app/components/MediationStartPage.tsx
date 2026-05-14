@@ -101,7 +101,7 @@ export default function MediationStartPage() {
 
           <Link
             to="/mediation/join"
-            className="block text-center text-sm text-[#7A5C4D] hover:text-[#FF6347] underline mt-6"
+            className="block w-full h-14 rounded-full border-2 border-[#FF6347] bg-[#FFF8F4] text-[#FF6347] text-center leading-[52px] font-medium hover:bg-[#FFE0CC] transition-all mt-4"
           >
             전달받은 방 번호로 참여하기
           </Link>

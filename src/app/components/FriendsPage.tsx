@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import { Copy, Check, Heart, RefreshCw } from "lucide-react";
 import { addPartnerByCode, getConnectedPartners, type ConnectedPartner } from "../../api/partnerApi";
+import { useDisplayNames } from "../utils/useDisplayNames";
 
 const MOCK_CODE = "COUPLE-4821";
 
@@ -34,6 +35,7 @@ export default function FriendsPage() {
   const [codeInput, setCodeInput] = useState("");
   const [inputError, setInputError] = useState("");
   const [partner, setPartner] = useState<ConnectedPartner | null>(null);
+  const { currentName, currentInitial, partnerName: fallbackPartnerName, partnerInitial: fallbackPartnerInitial } = useDisplayNames();
 
   const refreshConnectedPartner = async () => {
     try {
@@ -89,7 +91,8 @@ export default function FriendsPage() {
 
   // ── 연결 완료 ──────────────────────────────────────────
   if (step === "connected") {
-    const partnerName = partner?.nickname || "남자친구";
+    const partnerName = partner?.nickname || fallbackPartnerName;
+    const partnerInitial = partnerName.slice(0, 1).toUpperCase() || fallbackPartnerInitial;
     const partnerMbti = partner?.mbti || "MBTI";
     const partnerAttachment = partner?.attachmentTypeDescription || "불안형";
 
@@ -117,23 +120,23 @@ export default function FriendsPage() {
 
           {/* 커플 요약 */}
           <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-8">
-            <h2 className="text-base font-semibold text-[#1F1410] mb-5">여자친구와 남자친구의 공간</h2>
-            <div className="flex items-center gap-8 mb-6">
+            <h2 className="text-base font-semibold text-[#1F1410] mb-5">{currentName}님과 {partnerName}님의 공간</h2>
+            <div className="flex flex-col sm:flex-row items-center gap-8 mb-6">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-2xl font-bold">
-                  여
+                  {currentInitial}
                 </div>
-                <p className="text-sm font-medium text-[#1F1410]">여자친구 (나)</p>
+                <p className="text-sm font-medium text-[#1F1410]">{currentName} (나)</p>
                 <span className="px-2 py-0.5 bg-[#5A9F7C]/10 text-[#5A9F7C] text-xs rounded-full">안정형</span>
               </div>
-              <div className="flex-1 flex flex-col items-center gap-2">
+              <div className="w-full sm:flex-1 flex flex-col items-center gap-2">
                 <span className="text-3xl">💑</span>
                 <div className="w-full h-[2px] bg-gradient-to-r from-[#FF6347] to-[#D4956A] rounded-full" />
                 <p className="text-xs text-[#7A5C4D]">함께한 지 243일 · EFT 중재 {recentConflicts.length}회</p>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-2xl font-bold">
-                  남
+                  {partnerInitial}
                 </div>
                 <p className="text-sm font-medium text-[#1F1410]">{partnerName}</p>
                 <span className="px-2 py-0.5 bg-[#D4956A]/10 text-[#D4956A] text-xs rounded-full">{partnerAttachment}</span>
@@ -142,7 +145,7 @@ export default function FriendsPage() {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-[#FFE0CC] rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-[#1F1410]">3</p>
                 <p className="text-sm text-[#7A5C4D] mt-1">갈등 해결 완료</p>
@@ -159,7 +162,7 @@ export default function FriendsPage() {
           </div>
 
           {/* 패턴 & 약속 */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
               <h3 className="font-semibold text-[#1F1410] mb-2">자주 반복되는 갈등 패턴</h3>
               <p className="text-xs text-[#7A5C4D] mb-4">최근 우리 사이에서 반복된 감정 패턴을 확인해보세요.</p>
@@ -208,7 +211,7 @@ export default function FriendsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#FFE9DD] text-[#D4956A]"}`}>
-                        {isCompleted ? "AI 중재 완료" : "남자친구 입장 대기"}
+                        {isCompleted ? "AI 중재 완료" : `${partnerName}님 입장 대기`}
                       </span>
                       <span className="text-sm text-[#7A5C4D]">{record.temp}°</span>
                     </div>
@@ -258,7 +261,7 @@ export default function FriendsPage() {
             <p className="text-[#7A5C4D] leading-relaxed mb-8">
               초대 코드를 생성하거나, 상대방이 보낸 코드를 입력해 연결할 수 있어요.
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={() => setStep("code_shown")}
                 className="py-4 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all font-medium shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
@@ -306,7 +309,7 @@ export default function FriendsPage() {
               {isConnecting ? (
                 <div className="flex items-center justify-center gap-2 py-3">
                   <div className="w-4 h-4 rounded-full bg-[#FF6347] animate-ping" />
-                  <span className="text-sm text-[#7A5C4D]">남자친구 연결 중...</span>
+                  <span className="text-sm text-[#7A5C4D]">{fallbackPartnerName}님 연결 중...</span>
                 </div>
               ) : (
                 <button

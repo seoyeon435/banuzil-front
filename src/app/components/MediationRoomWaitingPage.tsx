@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { getSewingSessionList, isRealSewingSessionId, type SewingSession } from "../../api/sewingApi";
 import AuthDebugBadge from "./AuthDebugBadge";
+import { useDisplayNames } from "../utils/useDisplayNames";
 
 function isPartnerJoined(session: SewingSession | undefined): boolean {
   if (!session) return false;
@@ -16,6 +17,7 @@ function isPartnerJoined(session: SewingSession | undefined): boolean {
 
 export default function MediationRoomWaitingPage() {
   const navigate = useNavigate();
+  const { partnerName } = useDisplayNames();
   const sessionId = sessionStorage.getItem("sewingSessionId");
   const [isChecking, setIsChecking] = useState(false);
   const [lastCheckedAt, setLastCheckedAt] = useState<string>("");
@@ -97,7 +99,7 @@ export default function MediationRoomWaitingPage() {
             방 번호: {isRealSewingSessionId(sessionId) ? sessionId : "-"}
           </p>
           <p className="text-[#7A5C4D] leading-relaxed mb-8">
-            상대방이 이 방 번호로 입장하면 각자 입장을 작성할 수 있어요.
+            {partnerName}님이 이 방 번호로 입장하면 각자 입장을 작성할 수 있어요.
           </p>
           <p className="text-sm text-[#7A5C4D] mb-6">
             {isChecking ? "상대방 입장 여부를 확인 중입니다..." : "상대방 입장 여부를 확인 중입니다..."}

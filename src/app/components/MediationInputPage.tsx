@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSewingErrorMessage, getSewingSessionList, isRealSewingSessionId, submitSewingRound, type SewingSession } from "../../api/sewingApi";
 import AuthDebugBadge from "./AuthDebugBadge";
+import { useDisplayNames } from "../utils/useDisplayNames";
 
 const conflictTypes = ["연락문제", "가치관차이", "약속파기", "데이트비용", "기타"];
 
@@ -37,6 +38,7 @@ function getRoundSaveState(session: SewingSession | undefined, localSaved: boole
 
 export default function MediationInputPage() {
   const navigate = useNavigate();
+  const { currentName, currentInitial, partnerName } = useDisplayNames();
   const [input, setInput] = useState("");
   const [submittedInput, setSubmittedInput] = useState("");
   const [showTips, setShowTips] = useState(false);
@@ -193,19 +195,19 @@ export default function MediationInputPage() {
             <span className="text-sm font-medium text-[#1F1410]">
               {isRealSewingSessionId(sessionStorage.getItem("sewingSessionId"))
                 ? `방 번호: ${sessionStorage.getItem("sewingSessionId")}`
-                : "남자친구와 연결된 우리 공간"}
+                : `${partnerName}님과 연결된 우리 공간`}
             </span>
           </div>
 
           {/* 두 입장 카드 */}
-          <div className="grid grid-cols-2 gap-5 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
             {/* 내 입장 */}
             <div className="bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-t-4 border-[#FF6347]">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-full bg-[#5A9F7C] flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xs font-bold">✓</span>
                 </div>
-                <span className="font-semibold text-[#1F1410] text-sm">여자친구의 입장</span>
+                <span className="font-semibold text-[#1F1410] text-sm">{currentName}의 입장</span>
                 <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
                   isRoundSaved ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#FFE9DD] text-[#D4956A]"
                 }`}>
@@ -229,7 +231,7 @@ export default function MediationInputPage() {
                     <div className="w-2.5 h-2.5 rounded-full bg-[#D4956A] animate-pulse" />
                   </div>
                 )}
-                <span className="font-semibold text-[#1F1410] text-sm">남자친구의 입장</span>
+                <span className="font-semibold text-[#1F1410] text-sm">{partnerName}님의 입장</span>
                 <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
                   phase === "partner_loaded"
                     ? "bg-[#E0F4E8] text-[#5A9F7C]"
@@ -246,7 +248,7 @@ export default function MediationInputPage() {
                   <div className="h-3 bg-[#F0DFD0] rounded animate-pulse w-full" />
                   <div className="h-3 bg-[#F0DFD0] rounded animate-pulse w-5/6" />
                   <div className="h-3 bg-[#F0DFD0] rounded animate-pulse w-4/6" />
-                  <p className="text-xs text-[#7A5C4D] mt-3">남자친구가 입장을 입력하고 있어요.</p>
+                  <p className="text-xs text-[#7A5C4D] mt-3">{partnerName}님이 입장을 입력하고 있어요.</p>
                 </div>
               )}
             </div>
@@ -262,7 +264,7 @@ export default function MediationInputPage() {
                 <p className="text-sm text-[#FF6347] font-semibold mb-1">방 번호: {sessionStorage.getItem("sewingSessionId")}</p>
               )}
               <p className="text-[#7A5C4D] text-sm">
-                상대방의 입장이 입력되면 AI가 두 사람을 중립적으로 분석해드려요.
+                {partnerName}님의 입장이 입력되면 AI가 두 사람을 중립적으로 분석해드려요.
               </p>
               {lastCheckedAt && (
                 <p className="text-xs text-[#7A5C4D] mt-2">마지막 확인: {lastCheckedAt}</p>
@@ -306,23 +308,23 @@ export default function MediationInputPage() {
 
   // ── 입력 화면 ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row min-w-0 overflow-x-hidden [word-break:keep-all]">
       <AuthDebugBadge />
       {/* 왼쪽 패널 */}
-      <div className="w-[380px] bg-[#FFE9DD] p-8 flex flex-col flex-shrink-0">
+      <div className="w-full lg:w-[380px] bg-[#FFE9DD] p-6 lg:p-8 flex flex-col flex-shrink-0">
         {/* 연결 정보 */}
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] font-bold text-lg">
-            여
+            {currentInitial}
           </div>
           <div>
-            <p className="text-[#1F1410] font-medium">나 (여자친구)</p>
+            <p className="text-[#1F1410] font-medium">나 ({currentName})</p>
             <span className="text-xs text-[#7A5C4D]">안정형 애착</span>
           </div>
         </div>
         <div className="flex items-center gap-2 mb-8 ml-2">
           <div className="w-[2px] h-4 bg-[#FF6347]/30" />
-          <span className="text-xs text-[#7A5C4D]">상대방: 남자친구</span>
+          <span className="text-xs text-[#7A5C4D]">상대방: {partnerName}</span>
         </div>
 
         {/* 안내 카드 */}
@@ -365,14 +367,14 @@ export default function MediationInputPage() {
       </div>
 
       {/* 오른쪽 패널 */}
-      <div className="flex-1 p-10 flex flex-col">
+      <div className="flex-1 min-w-0 p-5 sm:p-8 lg:p-10 flex flex-col">
         <div className="max-w-[680px] mx-auto w-full flex-1 flex flex-col">
           <h1 className="text-[30px] font-semibold text-[#1F1410] mb-3">
             오늘 우리 사이에 어떤 일이 있었나요?
           </h1>
           <p className="text-[#7A5C4D] mb-8 leading-relaxed">
             내 입장을 먼저 차분히 적어주세요.<br />
-            남자친구의 입장은 따로 입력되어 AI가 함께 분석합니다.
+            {partnerName}님의 입장은 따로 입력되어 AI가 함께 분석합니다.
           </p>
 
           {/* 입력창 */}

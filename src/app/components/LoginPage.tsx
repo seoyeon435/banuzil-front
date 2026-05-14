@@ -8,8 +8,8 @@ export default function LoginPage() {
   const location = useLocation();
   const redirectMessage = (location.state as { message?: string })?.message ?? null;
 
-  const [loginId, setLoginId] = useState("tester@test.com");
-  const [password, setPassword] = useState("pw1234");
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,9 +50,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Panel - Decorative */}
-      <div className="w-1/2 bg-gradient-to-br from-[#FF6347] to-[#E84028] flex flex-col items-center justify-center text-white relative overflow-hidden">
+      <div className="w-full lg:w-1/2 min-h-[280px] lg:min-h-screen bg-gradient-to-br from-[#FF6347] to-[#E84028] flex flex-col items-center justify-center text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -82,7 +82,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-1/2 bg-white flex items-center justify-center px-12">
+      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 sm:px-12 py-10 lg:py-0">
         <div className="w-full max-w-[400px]">
           <div className="mb-10">
             <h1 className="text-[28px] font-bold text-[#1F1410] mb-2">로그인</h1>
@@ -111,6 +111,7 @@ export default function LoginPage() {
                   placeholder="아이디를 입력해주세요"
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
+                  autoComplete="off"
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
@@ -125,6 +126,7 @@ export default function LoginPage() {
                   placeholder="비밀번호를 입력해주세요"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   className="w-full h-12 pl-12 pr-12 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
                 <button
