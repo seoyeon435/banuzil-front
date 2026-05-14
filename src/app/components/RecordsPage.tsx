@@ -4,6 +4,15 @@ import { useState, useEffect } from "react";
 import StitchDivider from "./ui/StitchDivider";
 import { getSewingSessionList, SewingSession } from "../../api/sewingApi";
 
+const ITEMS_PER_PAGE = 3;
+
+function displayName(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.toLowerCase() === "null") return fallback;
+  return trimmed;
+}
+
 const MOCK_RECORDS = [
   {
     id: 1,
@@ -65,6 +74,8 @@ const MOCK_RECORDS = [
 // API 세션 → 화면 카드 형태로 변환
 function sessionToRecord(s: SewingSession, idx: number) {
   const isCompleted = s.status === "COMPLETED" || s.status === "completed";
+  const initiatorName = displayName(s.initiatorNickname, "나");
+  const participantName = displayName(s.participantNickname, "상대방");
   const date = new Date(s.updatedAt).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "2-digit",
@@ -79,7 +90,7 @@ function sessionToRecord(s: SewingSession, idx: number) {
     partnerInputDone: s.currentRound > 1,
     aiMediated: isCompleted,
     recoverySaved: false,
-    preview: `${s.initiatorNickname}과(와) ${s.participantNickname}의 갈등 중재 · 현재 ${s.currentRound}라운드`,
+    preview: `${initiatorName}과(와) ${participantName}의 갈등 중재 · 현재 ${s.currentRound}라운드`,
   };
 }
 
@@ -92,6 +103,7 @@ export default function RecordsPage() {
   const [filterPeriod, setFilterPeriod] = useState("기간 선택");
   const [filterTemp, setFilterTemp] = useState("all");
   const [records, setRecords] = useState(MOCK_RECORDS);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -121,6 +133,36 @@ export default function RecordsPage() {
     if (filterTemp === "low" && r.temperature >= 50) return false;
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = filtered.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterType, filterPeriod, filterTemp]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    console.log("[Records] 전체 sessions 개수", filtered.length);
+    console.log("[Records] currentPage", safeCurrentPage);
+    console.log("[Records] itemsPerPage", ITEMS_PER_PAGE);
+    console.log("[Records] totalPages", totalPages);
+    console.log("[Records] 현재 페이지에 표시되는 currentItems", currentItems);
+  }, [currentItems, filtered.length, safeCurrentPage, totalPages]);
+
+  const moveToPage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <MyPageLayout>
@@ -193,7 +235,7 @@ export default function RecordsPage() {
 
         {/* Records List */}
         <div className="space-y-4 mb-8">
-          {filtered.map((record) => {
+          {currentItems.map((record) => {
             const tempStyle = getTemperatureColor(record.temperature);
             const isCompleted = record.status === "completed";
 
@@ -271,19 +313,39 @@ export default function RecordsPage() {
 
         {/* Pagination */}
         <div className="flex items-center justify-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC] transition-all">
+          <button
+            onClick={() => moveToPage(safeCurrentPage - 1)}
+            disabled={safeCurrentPage === 1}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] transition-all ${
+              safeCurrentPage === 1
+                ? "text-[#C9B8A8] cursor-not-allowed"
+                : "text-[#7A5C4D] hover:bg-[#FFE0CC]"
+            }`}
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FF6347] text-white font-medium">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC] transition-all">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC] transition-all">
-            3
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC] transition-all">
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => moveToPage(page)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg font-medium transition-all ${
+                safeCurrentPage === page
+                  ? "bg-[#FF6347] text-white"
+                  : "border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC]"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            onClick={() => moveToPage(safeCurrentPage + 1)}
+            disabled={safeCurrentPage === totalPages}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] transition-all ${
+              safeCurrentPage === totalPages
+                ? "text-[#C9B8A8] cursor-not-allowed"
+                : "text-[#7A5C4D] hover:bg-[#FFE0CC]"
+            }`}
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

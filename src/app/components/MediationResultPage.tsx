@@ -1,14 +1,49 @@
 import { useNavigate } from "react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AlertTriangle } from "lucide-react";
-import { isRealSewingSessionId, submitSewingRound } from "../../api/sewingApi";
+import {
+  getSewingErrorMessage,
+  getSewingSessionList,
+  isRealSewingSessionId,
+  submitSewingRound,
+  type SewingSession,
+} from "../../api/sewingApi";
 
 type RoundPhase = "input" | "waiting_partner" | "both_submitted";
+type SidePanel = "progress" | "insights" | null;
 
 interface CompletedRound {
   roundIdx: number;
   myAnswer: string;
   partnerAnswer: string;
+}
+
+function findCurrentSession(sessions: SewingSession[], sessionId: string | null): SewingSession | undefined {
+  return sessions.find((session) => Number(session.sessionId) === Number(sessionId));
+}
+
+function readBooleanField(session: SewingSession | undefined, keys: string[]): boolean {
+  if (!session) return false;
+  return keys.some((key) => session[key] === true || session[key] === "true" || session[key] === "Y");
+}
+
+function getRoundCompletionState(session: SewingSession | undefined, apiRound: number, localSaved: boolean) {
+  const status = typeof session?.status === "string" ? session.status.toUpperCase() : "";
+  const currentRound = typeof session?.currentRound === "number" ? session.currentRound : 0;
+  const explicitMine = readBooleanField(session, ["mySubmitted", "myInputDone", "initiatorSubmitted", "creatorSubmitted", "meSubmitted"]);
+  const explicitPartner = readBooleanField(session, ["partnerSubmitted", "partnerInputDone", "participantSubmitted", "opponentSubmitted"]);
+  const bothByStatus = ["BOTH_SUBMITTED", "READY_FOR_ANALYSIS", "ANALYZING", "COMPLETED", "DONE"].includes(status);
+  const bothByRound = currentRound > apiRound;
+
+  // TODO: 백엔드 session-list에 라운드별 제출 여부 필드가 확정되면 이 조건을 해당 필드 기준으로 좁히기.
+  const mySaved = localSaved || explicitMine || currentRound >= apiRound || bothByStatus || bothByRound;
+  const partnerSaved = explicitPartner || bothByStatus || bothByRound;
+
+  return {
+    mySaved,
+    partnerSaved,
+    bothSaved: mySaved && partnerSaved,
+  };
 }
 
 const ROUNDS = [
@@ -57,7 +92,12 @@ export default function MediationResultPage() {
   const [myInput, setMyInput] = useState("");
   const [savedMyInput, setSavedMyInput] = useState("");
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [lastCheckedAt, setLastCheckedAt] = useState("");
+  const [activePanel, setActivePanel] = useState<SidePanel>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const submitInFlightRef = useRef(false);
 
   const temperature = Math.max(38, 75 - completedRounds.length * 10);
   const isLastRound = currentRound === ROUNDS.length - 1;
@@ -66,29 +106,96 @@ export default function MediationResultPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [roundPhase, completedRounds.length, currentRound]);
 
+  const getApiRound = useCallback(() => currentRound + 2, [currentRound]);
+
+  const checkRoundCompletion = useCallback(async (localSaved = savedMyInput.trim().length > 0) => {
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    const apiRound = getApiRound();
+
+    console.log("[Sewing] 현재 sessionId", sessionId);
+    console.log("[Sewing] 현재 화면 라운드", currentRound + 1);
+    console.log("[Sewing] 실제 API에 보낼 round 번호", apiRound);
+    console.log("[Sewing] 상대방 답변 완료 polling 호출 여부", true);
+
+    try {
+      const sessions = await getSewingSessionList();
+      console.log("[Sewing] 상대방 답변 완료 여부 polling 응답", sessions);
+      const currentSession = findCurrentSession(sessions, sessionId);
+      console.log("[Sewing] 현재 세션 상태", currentSession);
+      const state = getRoundCompletionState(currentSession, apiRound, localSaved);
+      console.log("[Sewing] 내 라운드 답변 저장 여부", state.mySaved);
+      console.log("[Sewing] 상대방 답변 완료 여부 polling 결과", state.partnerSaved);
+      console.log("[Sewing] 다음 라운드 이동 조건 충족 여부", state.bothSaved);
+      setLastCheckedAt(new Date().toLocaleTimeString());
+
+      if (state.bothSaved) {
+        setRoundPhase("both_submitted");
+      }
+
+      return state;
+    } catch (error) {
+      console.error("[API] 라운드 완료 여부 확인 실패:", error);
+      return null;
+    }
+  }, [currentRound, getApiRound, savedMyInput]);
+
+  useEffect(() => {
+    if (roundPhase !== "waiting_partner") return;
+
+    void checkRoundCompletion(true);
+    const intervalId = window.setInterval(() => {
+      void checkRoundCompletion(true);
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [checkRoundCompletion, roundPhase]);
+
   // round 매핑: 입장저장=1, 사건정리=2, 감정확인=3, 관계패턴=4, 대화문장=5
   const handleSubmitMyAnswer = async () => {
+    if (submitInFlightRef.current) return;
     if (myInput.trim().length === 0) return;
+    submitInFlightRef.current = true;
+    setIsSubmitting(true);
+    setErrorMsg("");
+
     const content = myInput.trim();
 
     const sessionId = sessionStorage.getItem("sewingSessionId");
     const isJoined = sessionStorage.getItem("sewingSessionJoined") === "true";
     if (isRealSewingSessionId(sessionId) && isJoined) {
       try {
-        const apiRound = currentRound + 2;
+        const apiRound = getApiRound();
+        console.log("[Sewing] 현재 sessionId", sessionId);
+        console.log("[Sewing] 현재 화면 라운드", currentRound + 1);
+        console.log("[Sewing] 실제 API에 보낼 round 번호", apiRound);
         await submitSewingRound(Number(sessionId), apiRound, content);
+        console.log("[Sewing] 라운드 답변 저장 성공", { sessionId, apiRound });
+        setSavedMyInput(content);
+        setMyInput("");
+        setRoundPhase("waiting_partner");
+        await checkRoundCompletion(true);
       } catch (error) {
-        console.error("[API] 라운드 답변 저장 실패 → mock 흐름 유지:", error);
-        console.log("[Sewing] mock fallback 진행 여부", true);
+        console.error("[API] 라운드 답변 저장 실패:", error);
+        const state = await checkRoundCompletion(false);
+        if (state?.mySaved) {
+          setSavedMyInput(content);
+          setMyInput("");
+          setRoundPhase("waiting_partner");
+        } else {
+          setErrorMsg(getSewingErrorMessage(error));
+        }
+      } finally {
+        submitInFlightRef.current = false;
+        setIsSubmitting(false);
       }
     } else {
-      console.log("[Sewing] 실제 API 호출 여부", false, { sessionId, isJoined, round: currentRound + 2 });
-      console.log("[Sewing] mock fallback 진행 여부", true);
+      console.log("[Sewing] 실제 API 호출 여부", false, { sessionId, isJoined, round: getApiRound() });
+      setErrorMsg("중재 방 참여가 확인된 후 답변을 저장할 수 있습니다.");
+      submitInFlightRef.current = false;
+      setIsSubmitting(false);
     }
-
-    setSavedMyInput(content);
-    setMyInput("");
-    setRoundPhase("waiting_partner");
   };
 
   const handleLoadPartner = () => {
@@ -107,6 +214,8 @@ export default function MediationResultPage() {
     setCurrentRound((r) => r + 1);
     setRoundPhase("input");
     setSavedMyInput("");
+    setErrorMsg("");
+    setLastCheckedAt("");
   };
 
   const handleComplete = () => {
@@ -118,9 +227,9 @@ export default function MediationResultPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8F4] flex">
+    <div className="min-h-screen bg-[#FFF8F4] flex min-w-0">
       {/* ── 좌측: 상태 패널 ──────────────────────── */}
-      <div className="w-[280px] bg-[#FFE0CC] p-6 flex flex-col flex-shrink-0">
+      <div className="hidden xl:flex w-[280px] bg-[#FFE0CC] p-6 flex-col flex-shrink-0">
         <h2 className="text-lg font-semibold text-[#1F1410] mb-5">중재 진행 상황</h2>
 
         {/* Round Progress */}
@@ -231,8 +340,23 @@ export default function MediationResultPage() {
       </div>
 
       {/* ── 중앙: 라운드 타임라인 ───────────────────── */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-[700px] mx-auto space-y-6">
+      <div className="flex-1 min-w-0 p-4 sm:p-6 xl:p-8 overflow-y-auto">
+        <div className="xl:hidden flex gap-3 mb-4">
+          <button
+            onClick={() => setActivePanel("progress")}
+            className="flex-1 h-11 rounded-full bg-white border border-[#F0DFD0] text-[#1F1410] text-sm font-medium shadow-[0_4px_16px_rgba(255,99,71,0.08)]"
+          >
+            진행 상황 보기
+          </button>
+          <button
+            onClick={() => setActivePanel("insights")}
+            className="flex-1 h-11 rounded-full bg-white border border-[#F0DFD0] text-[#1F1410] text-sm font-medium shadow-[0_4px_16px_rgba(255,99,71,0.08)]"
+          >
+            AI 인사이트 보기
+          </button>
+        </div>
+
+        <div className="max-w-[760px] mx-auto space-y-6 min-w-0">
 
           {/* 도입 배너 */}
           <div className="bg-[#FF6347]/5 border-l-4 border-[#FF6347] rounded-xl p-5">
@@ -255,9 +379,9 @@ export default function MediationResultPage() {
                 className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(255,99,71,0.1)] overflow-hidden border border-[#5A9F7C]/30"
               >
                 {/* 라운드 헤더 */}
-                <div className="bg-[#E0F4E8] px-6 py-3 flex items-center gap-3">
+                <div className="bg-[#E0F4E8] px-4 sm:px-6 py-3 flex items-center gap-3 min-w-0">
                   <span className="text-xl">{round.emoji}</span>
-                  <span className="font-semibold text-[#1F1410] text-sm">
+                  <span className="font-semibold text-[#1F1410] text-sm min-w-0 break-words">
                     {cr.roundIdx + 1}라운드 — {round.label}
                   </span>
                   <span className="ml-auto text-[#5A9F7C] text-xs font-semibold">✓ 완료</span>
@@ -271,7 +395,7 @@ export default function MediationResultPage() {
                   </p>
 
                   {/* 두 사람의 답변 */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="bg-[#FFF8F4] rounded-xl p-4 border border-[#FF6347]/20">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
@@ -310,10 +434,10 @@ export default function MediationResultPage() {
           {/* ── 현재 진행 중인 라운드 ── */}
           <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(255,99,71,0.17)] overflow-hidden">
             {/* 라운드 헤더 */}
-            <div className="bg-[#FF6347]/10 px-6 py-4 flex items-center gap-3 border-b border-[#FF6347]/20">
+            <div className="bg-[#FF6347]/10 px-4 sm:px-6 py-4 flex items-center gap-3 border-b border-[#FF6347]/20 min-w-0">
               <span className="text-2xl">{ROUNDS[currentRound].emoji}</span>
-              <div>
-                <p className="font-semibold text-[#1F1410]">
+              <div className="min-w-0">
+                <p className="font-semibold text-[#1F1410] break-words">
                   {currentRound + 1}라운드 — {ROUNDS[currentRound].label}
                 </p>
                 <p className="text-xs text-[#FF6347]">
@@ -326,11 +450,11 @@ export default function MediationResultPage() {
 
             <div className="p-6 space-y-5">
               {/* AI 질문 */}
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#FF6347]/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-base">🧵</span>
-                </div>
-                <div className="flex-1 bg-[#FF6347]/5 rounded-xl p-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-[#FF6347]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-base">🧵</span>
+                  </div>
+                <div className="flex-1 min-w-0 bg-[#FF6347]/5 rounded-xl p-4">
                   <p className="text-xs text-[#7A5C4D] mb-1">AI 질문</p>
                   <p className="text-sm font-medium text-[#1F1410]">
                     {ROUNDS[currentRound].aiQuestion}
@@ -353,15 +477,16 @@ export default function MediationResultPage() {
                   />
                   <button
                     onClick={handleSubmitMyAnswer}
-                    disabled={myInput.trim().length === 0}
+                    disabled={myInput.trim().length === 0 || isSubmitting}
                     className={`w-full mt-3 py-3 rounded-full font-medium transition-all text-sm ${
-                      myInput.trim().length > 0
+                      myInput.trim().length > 0 && !isSubmitting
                         ? "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
                         : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
                     }`}
                   >
-                    답변 제출하기
+                    {isSubmitting ? "저장 중..." : "답변 제출하기"}
                   </button>
+                  {errorMsg && <p className="text-sm text-[#DC3545] mt-3">{errorMsg}</p>}
                   {completedRounds.length >= 1 && (
                     <button
                       onClick={handleEarlyExit}
@@ -407,20 +532,26 @@ export default function MediationResultPage() {
                       <div className="h-2.5 bg-[#F0DFD0] rounded animate-pulse w-3/4" />
                     </div>
                     <p className="text-xs text-[#7A5C4D] mt-3">남자친구가 답변을 작성하고 있어요.</p>
+                    {lastCheckedAt && (
+                      <p className="text-xs text-[#7A5C4D] mt-1">마지막 확인: {lastCheckedAt}</p>
+                    )}
                   </div>
 
                   {/* 시연용 버튼 */}
-                  <div className="bg-[#FFE9DD] border border-[#FFD19A] rounded-xl p-4">
-                    <p className="text-xs font-semibold text-[#1F1410] mb-2">
-                      시연용 — 실제 서비스에서는 남자친구가 직접 입력합니다
+                  <details className="bg-[#FFE9DD] border border-[#FFD19A] rounded-xl p-4">
+                    <summary className="cursor-pointer text-xs font-semibold text-[#1F1410]">
+                      개발용 mock 제어 열기
+                    </summary>
+                    <p className="text-xs text-[#7A5C4D] my-3">
+                      실제 API 테스트 중에는 사용하지 마세요. 서버 상태와 무관하게 화면만 진행합니다.
                     </p>
                     <button
                       onClick={handleLoadPartner}
-                      className="w-full py-3 bg-[#D4956A] text-white rounded-full hover:bg-[#C47D52] transition-all font-medium text-sm"
+                      className="w-full py-3 bg-[#FFE0CC] text-[#1F1410] rounded-full hover:bg-[#F0DFD0] transition-all font-medium text-sm"
                     >
-                      남자친구 답변 불러오기
+                      개발용: 남자친구 답변 불러오기
                     </button>
-                  </div>
+                  </details>
                 </div>
               )}
 
@@ -428,7 +559,7 @@ export default function MediationResultPage() {
               {roundPhase === "both_submitted" && (
                 <div className="space-y-4">
                   {/* 두 사람 답변 카드 */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="bg-[#FFF8F4] border border-[#FF6347]/20 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-[#FFB89A] ring-1 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xs font-bold flex-shrink-0">
@@ -501,7 +632,7 @@ export default function MediationResultPage() {
       </div>
 
       {/* ── 우측: AI 인사이트 패널 ────────────────── */}
-      <div className="w-[260px] bg-white p-6 border-l border-[#F0DFD0] overflow-y-auto flex-shrink-0">
+      <div className="hidden xl:block w-[260px] bg-white p-6 border-l border-[#F0DFD0] overflow-y-auto flex-shrink-0">
         <h2 className="text-base font-semibold text-[#1F1410] mb-5">AI 인사이트</h2>
 
         <div className="bg-[#FFE9DD] rounded-xl p-4 mb-4">
@@ -530,6 +661,79 @@ export default function MediationResultPage() {
           </div>
         </div>
       </div>
+
+      {activePanel && (
+        <div className="xl:hidden fixed inset-0 z-50 bg-black/30" onClick={() => setActivePanel(null)}>
+          <div
+            className="absolute right-0 top-0 h-full w-[min(360px,92vw)] overflow-y-auto bg-white p-6 shadow-[-8px_0_24px_rgba(31,20,16,0.15)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-[#1F1410]">
+                {activePanel === "progress" ? "중재 진행 상황" : "AI 인사이트"}
+              </h2>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="px-3 py-1.5 rounded-full border border-[#F0DFD0] text-sm text-[#7A5C4D] hover:bg-[#FFF8F4]"
+              >
+                닫기
+              </button>
+            </div>
+
+            {activePanel === "progress" ? (
+              <div>
+                <div className="bg-[#FFF8F4] rounded-xl p-4 mb-5">
+                  <div className="text-sm font-semibold text-[#FF6347] mb-3">
+                    {currentRound + 1}라운드 / 4라운드
+                  </div>
+                  <div className="space-y-2">
+                    {ROUNDS.map((r, i) => {
+                      const isDone = i < currentRound;
+                      const isCurrent = i === currentRound;
+                      return (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? "bg-[#5A9F7C]" : isCurrent ? "bg-[#FF6347]" : "bg-[#F0DFD0]"}`} />
+                          <span className={`text-xs leading-tight ${isDone ? "text-[#5A9F7C] line-through" : isCurrent ? "text-[#1F1410] font-semibold" : "text-[#7A5C4D]"}`}>
+                            {r.emoji} {r.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="bg-[#FFF8F4] rounded-xl p-4 mb-5">
+                  <p className="text-sm font-semibold text-[#1F1410] mb-2">갈등 온도</p>
+                  <p className="text-2xl font-bold text-[#D4956A]">{temperature}°</p>
+                </div>
+                <button
+                  onClick={handleEarlyExit}
+                  className="w-full py-3 border-2 border-[#DC3545] text-[#DC3545] rounded-full hover:bg-[#FFE0E0] transition-all text-sm"
+                >
+                  중재 종료하기
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="bg-[#FFE9DD] rounded-xl p-4 mb-4">
+                  <p className="text-sm font-semibold text-[#1F1410] mb-2">💡 공통점 발견</p>
+                  <p className="text-sm text-[#7A5C4D]">결국 둘 다 원하는 건 같아요 — 서로에게 인정받고 싶은 마음</p>
+                </div>
+                <div className="bg-[#FF6347]/5 rounded-xl p-4 mb-4">
+                  <p className="text-sm font-semibold text-[#1F1410] mb-2">🔄 반복 패턴</p>
+                  <p className="text-sm text-[#7A5C4D]">한쪽은 다가가고 다른 한쪽은 물러나는 추격-회피 패턴이 보여요.</p>
+                </div>
+                <div className="bg-[#E0F4E8] rounded-xl p-4">
+                  <p className="text-sm font-semibold text-[#1F1410] mb-2">🤝 합의안 제안</p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-[#1F1410] bg-white rounded-lg p-2 border border-[#5A9F7C]/30">시험 끝나고 짧은 여행 가기</p>
+                    <p className="text-xs text-[#1F1410] bg-white rounded-lg p-2 border border-[#5A9F7C]/30">힘들 때 바로 말하기</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
