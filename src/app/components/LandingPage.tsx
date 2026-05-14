@@ -1,8 +1,17 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ChevronDown } from "lucide-react";
 import StitchDivider from "./ui/StitchDivider";
+import { logout, isLoggedIn } from "../../api/userApi";
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+  const loggedIn = isLoggedIn();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-[#FFF8F4]">
       {/* Header */}
@@ -13,24 +22,43 @@ export default function LandingPage() {
             <span className="text-xl font-bold text-[#1F1410]">바느질</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              to="/mypage/profile"
-              className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
-            >
-              마이페이지
-            </Link>
-            <Link
-              to="/login"
-              className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
-            >
-              로그인
-            </Link>
-            <Link
-              to="/signup"
-              className="px-8 py-3 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-colors"
-            >
-              시작하기
-            </Link>
+            {loggedIn ? (
+              <>
+                <Link
+                  to="/mypage/profile"
+                  className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
+                >
+                  마이페이지
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 py-2.5 text-[#7A5C4D] hover:text-[#FF6347] transition-colors"
+                >
+                  로그아웃
+                </button>
+                <Link
+                  to="/mediation/start"
+                  className="px-8 py-3 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-colors"
+                >
+                  중재 시작하기
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-6 py-2.5 text-[#1F1410] hover:text-[#FF6347] transition-colors"
+                >
+                  로그인
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-8 py-3 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-colors"
+                >
+                  시작하기
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

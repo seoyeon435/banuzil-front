@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
+import { isRealSewingSessionId, submitSewingRound } from "../../api/sewingApi";
 
 type RoundPhase = "input" | "waiting_partner" | "both_submitted";
 
@@ -65,9 +66,27 @@ export default function MediationResultPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [roundPhase, completedRounds.length, currentRound]);
 
-  const handleSubmitMyAnswer = () => {
+  // round 매핑: 입장저장=1, 사건정리=2, 감정확인=3, 관계패턴=4, 대화문장=5
+  const handleSubmitMyAnswer = async () => {
     if (myInput.trim().length === 0) return;
-    setSavedMyInput(myInput.trim());
+    const content = myInput.trim();
+
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    const isJoined = sessionStorage.getItem("sewingSessionJoined") === "true";
+    if (isRealSewingSessionId(sessionId) && isJoined) {
+      try {
+        const apiRound = currentRound + 2;
+        await submitSewingRound(Number(sessionId), apiRound, content);
+      } catch (error) {
+        console.error("[API] 라운드 답변 저장 실패 → mock 흐름 유지:", error);
+        console.log("[Sewing] mock fallback 진행 여부", true);
+      }
+    } else {
+      console.log("[Sewing] 실제 API 호출 여부", false, { sessionId, isJoined, round: currentRound + 2 });
+      console.log("[Sewing] mock fallback 진행 여부", true);
+    }
+
+    setSavedMyInput(content);
     setMyInput("");
     setRoundPhase("waiting_partner");
   };

@@ -1,5 +1,7 @@
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { User, BarChart3, FileText, Heart, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { fetchCurrentUserProfile, getStoredCurrentUser, logout, type CurrentUser } from "../../api/userApi";
 
 interface MyPageLayoutProps {
   children: React.ReactNode;
@@ -7,6 +9,27 @@ interface MyPageLayoutProps {
 
 export default function MyPageLayout({ children }: MyPageLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<CurrentUser>(() => getStoredCurrentUser());
+
+  useEffect(() => {
+    let mounted = true;
+
+    setCurrentUser(getStoredCurrentUser());
+    fetchCurrentUserProfile().then((profile) => {
+      if (!mounted || !profile) return;
+      setCurrentUser(profile);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const navItems = [
     { path: "/mypage/profile", icon: User, label: "내 프로필", emoji: "👤" },
@@ -31,14 +54,20 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         <div className="p-6 border-b border-[#F0DFD0]">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xl font-bold">
-              여
+              {(currentUser.nickname ?? currentUser.email ?? "나").slice(0, 1).toUpperCase()}
 </div>
             <div>
-              <h3 className="text-lg font-semibold text-[#1F1410]">여자친구</h3>
+              <h3 className="text-lg font-semibold text-[#1F1410]">{currentUser.nickname ?? "로그인 사용자"}</h3>
               <span className="inline-block px-3 py-1 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full mt-1">
                 ENFP
               </span>
             </div>
+          </div>
+          <div className="rounded-xl bg-[#FFF8F4] border border-[#F0DFD0] p-3 text-xs text-[#7A5C4D] space-y-1">
+            <p className="font-semibold text-[#1F1410]">현재 로그인</p>
+            <p className="break-all">{currentUser.email ?? "이메일 정보 없음"}</p>
+            <p>닉네임: {currentUser.nickname ?? "-"}</p>
+            {currentUser.userId && <p>userId: {currentUser.userId}</p>}
           </div>
         </div>
 
@@ -67,7 +96,10 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
 
         {/* Logout Button */}
         <div className="p-6 border-t border-[#F0DFD0]">
-          <button className="flex items-center gap-2 text-[#7A5C4D] hover:text-[#DC3545] transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-[#7A5C4D] hover:text-[#DC3545] transition-colors"
+          >
             <LogOut className="w-4 h-4" />
             <span className="text-sm">로그아웃</span>
           </button>

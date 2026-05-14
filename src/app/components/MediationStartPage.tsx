@@ -1,10 +1,41 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 import MediationProgressHeader from "./MediationProgressHeader";
+import { createSewingSession, getSewingErrorMessage, isRealSewingSessionId } from "../../api/sewingApi";
+import AuthDebugBadge from "./AuthDebugBadge";
 
 export default function MediationStartPage() {
+  const navigate = useNavigate();
+  const [isCreating, setIsCreating] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleCreateRoom = async () => {
+    setIsCreating(true);
+    setMessage("");
+
+    try {
+      const sessionId = await createSewingSession();
+      if (!isRealSewingSessionId(sessionId)) {
+        setMessage("방 번호를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      sessionStorage.setItem("sewingSessionId", String(sessionId));
+      sessionStorage.removeItem("sewingSessionJoined");
+      console.log("[Sewing] 방 생성 후 입력 화면 이동 여부", false, { sessionId });
+      navigate("/mediation/room");
+    } catch (error) {
+      console.error("[API] 중재 방 생성 실패:", error);
+      setMessage(getSewingErrorMessage(error));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <>
       <MediationProgressHeader currentStep="start" />
+      <AuthDebugBadge />
 
       <div className="bg-[#FFF8F4] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[640px]">
@@ -54,12 +85,25 @@ export default function MediationStartPage() {
             </div>
           </div>
 
-          {/* Next Button */}
-          <Link
-            to="/mediation/input"
-            className="block w-full h-14 rounded-full bg-[#FF6347] text-white text-center leading-[56px] font-medium hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] transition-all"
+          <button
+            onClick={handleCreateRoom}
+            disabled={isCreating}
+            className={`block w-full h-14 rounded-full text-center font-medium transition-all ${
+              isCreating
+                ? "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
+                : "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
+            }`}
           >
-            갈등 중재 시작하기 →
+            {isCreating ? "중재 방 생성 중..." : "갈등 중재 시작하기 →"}
+          </button>
+
+          {message && <p className="text-sm text-[#DC3545] text-center mt-4">{message}</p>}
+
+          <Link
+            to="/mediation/join"
+            className="block text-center text-sm text-[#7A5C4D] hover:text-[#FF6347] underline mt-6"
+          >
+            전달받은 방 번호로 참여하기
           </Link>
         </div>
       </div>

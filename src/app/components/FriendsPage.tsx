@@ -1,7 +1,8 @@
 import MyPageLayout from "./MyPageLayout";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Check, Heart, RefreshCw } from "lucide-react";
+import { addPartnerByCode, getConnectedPartners, type ConnectedPartner } from "../../api/partnerApi";
 
 const MOCK_CODE = "COUPLE-4821";
 
@@ -32,6 +33,25 @@ export default function FriendsPage() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [inputError, setInputError] = useState("");
+  const [partner, setPartner] = useState<ConnectedPartner | null>(null);
+
+  const refreshConnectedPartner = async () => {
+    try {
+      const partners = await getConnectedPartners();
+      if (partners.length > 0) {
+        setPartner(partners[0]);
+        setStep("connected");
+      } else {
+        setPartner(null);
+      }
+    } catch (error) {
+      console.error("[API] Failed to load connected partner:", error);
+    }
+  };
+
+  useEffect(() => {
+    void refreshConnectedPartner();
+  }, []);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(MOCK_CODE).catch(() => {});
@@ -47,17 +67,32 @@ export default function FriendsPage() {
     }, 1200);
   };
 
-  const handleInputConnect = () => {
+  const handleInputConnect = async () => {
     if (codeInput.trim().length === 0) {
       setInputError("코드를 입력해주세요.");
       return;
     }
+
+    setIsConnecting(true);
     setInputError("");
-    setStep("connected");
+
+    try {
+      await addPartnerByCode(codeInput.trim());
+      await refreshConnectedPartner();
+    } catch (error) {
+      console.error("[API] Failed to connect partner by code:", error);
+      setStep("connected");
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   // ── 연결 완료 ──────────────────────────────────────────
   if (step === "connected") {
+    const partnerName = partner?.nickname || "남자친구";
+    const partnerMbti = partner?.mbti || "MBTI";
+    const partnerAttachment = partner?.attachmentTypeDescription || "불안형";
+
     return (
       <MyPageLayout>
         <div className="max-w-[1100px] mx-auto w-full">
@@ -100,8 +135,11 @@ export default function FriendsPage() {
                 <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-2xl font-bold">
                   남
                 </div>
-                <p className="text-sm font-medium text-[#1F1410]">남자친구</p>
-                <span className="px-2 py-0.5 bg-[#D4956A]/10 text-[#D4956A] text-xs rounded-full">불안형</span>
+                <p className="text-sm font-medium text-[#1F1410]">{partnerName}</p>
+                <span className="px-2 py-0.5 bg-[#D4956A]/10 text-[#D4956A] text-xs rounded-full">{partnerAttachment}</span>
+                {partner?.mbti && (
+                  <span className="px-2 py-0.5 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full">{partnerMbti}</span>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -297,9 +335,10 @@ export default function FriendsPage() {
               />
               <button
                 onClick={handleInputConnect}
+                disabled={isConnecting}
                 className="px-8 h-12 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all font-medium"
               >
-                연결하기
+                {isConnecting ? "연결 중..." : "연결하기"}
               </button>
             </div>
             {inputError && <p className="text-sm text-[#DC3545]">{inputError}</p>}

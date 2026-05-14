@@ -1,9 +1,10 @@
 import MyPageLayout from "./MyPageLayout";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StitchDivider from "./ui/StitchDivider";
+import { getSewingSessionList, SewingSession } from "../../api/sewingApi";
 
-const records = [
+const MOCK_RECORDS = [
   {
     id: 1,
     date: "2025.03.15",
@@ -61,6 +62,27 @@ const records = [
   },
 ];
 
+// API 세션 → 화면 카드 형태로 변환
+function sessionToRecord(s: SewingSession, idx: number) {
+  const isCompleted = s.status === "COMPLETED" || s.status === "completed";
+  const date = new Date(s.updatedAt).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).replace(/\. /g, ".").replace(".", "");
+  return {
+    id: s.sessionId ?? idx,
+    date,
+    temperature: Math.max(38, 75 - s.currentRound * 10),
+    status: isCompleted ? "completed" : "in_progress",
+    type: "갈등 중재",
+    partnerInputDone: s.currentRound > 1,
+    aiMediated: isCompleted,
+    recoverySaved: false,
+    preview: `${s.initiatorNickname}과(와) ${s.participantNickname}의 갈등 중재 · 현재 ${s.currentRound}라운드`,
+  };
+}
+
 const conflictTypes = ["전체 유형", "연락문제", "가치관차이", "약속파기", "데이트비용"];
 const periods = ["기간 선택", "최근 1개월", "최근 3개월", "최근 6개월"];
 
@@ -69,6 +91,21 @@ export default function RecordsPage() {
   const [filterType, setFilterType] = useState("전체 유형");
   const [filterPeriod, setFilterPeriod] = useState("기간 선택");
   const [filterTemp, setFilterTemp] = useState("all");
+  const [records, setRecords] = useState(MOCK_RECORDS);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const sessions = await getSewingSessionList();
+        if (sessions && sessions.length > 0) {
+          setRecords(sessions.map(sessionToRecord));
+        }
+        // 빈 배열이면 mock 유지
+      } catch (error) {
+        console.error("[API] 세션 목록 조회 실패 → mock fallback 유지:", error);
+      }
+    })();
+  }, []);
 
   const getTemperatureColor = (temp: number) => {
     if (temp >= 70) return { bg: "#FFE0E0", text: "#DC3545", emoji: "🔴" };
