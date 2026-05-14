@@ -1,7 +1,37 @@
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import axios from "axios";
 import MyPageLayout from "./MyPageLayout";
-import { Bell, Lock, Shield, Trash2 } from "lucide-react";
+import { Bell, Lock, Shield, Trash2, AlertTriangle } from "lucide-react";
+import { withdrawAccount } from "../../api/userApi";
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleWithdraw = async () => {
+    setErrorMessage("");
+    setSubmitting(true);
+    try {
+      await withdrawAccount();
+      // withdrawAccount가 내부에서 logout()을 호출해 토큰을 삭제하므로 바로 메인으로 이동.
+      navigate("/");
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status ?? null : null;
+      if (status === 401) {
+        setErrorMessage("로그인이 만료되었어요. 다시 로그인 후 시도해주세요.");
+      } else if (status === 500) {
+        setErrorMessage("서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.");
+      } else {
+        setErrorMessage("계정 삭제 중 오류가 발생했어요.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <MyPageLayout>
       <div className="max-w-[800px]">
@@ -92,7 +122,11 @@ export default function SettingsPage() {
             <h2 className="text-xl font-semibold text-[#DC3545]">위험 영역</h2>
           </div>
 
-          <button className="w-full text-left py-3 hover:opacity-80 transition-opacity">
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            className="w-full text-left py-3 hover:opacity-80 transition-opacity"
+          >
             <p className="text-[#DC3545] font-medium">계정 삭제</p>
             <p className="text-sm text-[#7A5C4D]">
               계정과 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
@@ -100,6 +134,50 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-[440px] w-full p-6 sm:p-8">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-[#DC3545] flex-shrink-0 mt-0.5" />
+              <div>
+                <h2 className="text-lg font-semibold text-[#1F1410] mb-1">정말 계정을 삭제할까요?</h2>
+                <p className="text-sm text-[#7A5C4D] leading-relaxed">
+                  프로필, 친구 관계, 갈등 기록이 모두 삭제됩니다. 이 작업은 되돌릴 수 없어요.
+                </p>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <p className="mt-4 text-sm text-[#DC3545] bg-[#FFE0E0] rounded-lg px-4 py-3">
+                {errorMessage}
+              </p>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  setErrorMessage("");
+                }}
+                disabled={submitting}
+                className="flex-1 h-11 rounded-full border-2 border-[#F0DFD0] text-[#7A5C4D] font-medium hover:bg-[#FFE0CC] transition-all disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleWithdraw}
+                disabled={submitting}
+                className="flex-1 h-11 rounded-full font-medium bg-[#DC3545] text-white hover:bg-[#B92A39] transition-all disabled:opacity-50"
+              >
+                {submitting ? "삭제 중..." : "계정 삭제"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MyPageLayout>
   );
 }

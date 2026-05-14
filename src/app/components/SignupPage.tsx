@@ -1,13 +1,20 @@
-import { Link } from "react-router";
-import { Lock, User, Eye, EyeOff, Check, Venus, Mars } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Lock, User, Eye, EyeOff, Check, Venus, Mars, Mail } from "lucide-react";
 import { useState } from "react";
+import { getSignupErrorMessage, login, signup } from "../../api/userApi";
 
 export default function SignupPage() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [nickname, setNickname] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState<"male" | "female" | "">("");
+  const [mbti, setMbti] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) return 0;
@@ -25,6 +32,36 @@ export default function SignupPage() {
     "ISTJ", "ISFJ", "ESTJ", "ESFJ",
     "ISTP", "ISFP", "ESTP", "ESFP"
   ];
+
+  const canSubmit =
+    nickname.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    passwordsMatch &&
+    gender !== "" &&
+    !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setErrorMessage("");
+    setSubmitting(true);
+    try {
+      await signup({
+        email: email.trim(),
+        password,
+        nickname: nickname.trim(),
+        gender,
+        mbti,
+      });
+      // 가입 응답에 토큰이 없으므로 즉시 로그인을 시도해 세션을 확보한다.
+      await login(email.trim(), password);
+      navigate("/signup/attachment-survey");
+    } catch (error) {
+      setErrorMessage(getSignupErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -106,21 +143,26 @@ export default function SignupPage() {
                 <input
                   type="text"
                   placeholder="표시될 이름을 입력해주세요"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
-            {/* ID Input */}
+            {/* Email Input */}
             <div>
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
-                아이디
+                이메일
               </label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
                 <input
-                  type="text"
-                  placeholder="사용할 아이디를 입력해주세요"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
                 />
               </div>
@@ -224,7 +266,11 @@ export default function SignupPage() {
               <label className="block text-sm font-medium text-[#1F1410] mb-2">
                 나의 MBTI (선택사항)
               </label>
-              <select className="w-full h-12 px-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all text-[#1F1410]">
+              <select
+                value={mbti}
+                onChange={(e) => setMbti(e.target.value)}
+                className="w-full h-12 px-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all text-[#1F1410]"
+              >
                 <option value="">선택해주세요</option>
                 {mbtiTypes.map((type) => (
                   <option key={type} value={type}>{type}</option>
@@ -233,13 +279,26 @@ export default function SignupPage() {
               <p className="text-xs text-[#7A5C4D] mt-1">나중에 설정해도 괜찮아요</p>
             </div>
 
+            {/* Error message */}
+            {errorMessage && (
+              <p className="text-sm text-[#DC3545] bg-[#FFE0E0] rounded-lg px-4 py-3">
+                {errorMessage}
+              </p>
+            )}
+
             {/* Signup Button */}
-            <Link
-              to="/signup/attachment-survey"
-              className="block w-full h-[52px] text-center leading-[52px] rounded-full font-medium transition-all bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)]"
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={`block w-full h-[52px] text-center rounded-full font-medium transition-all ${
+                canSubmit
+                  ? "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)]"
+                  : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
+              }`}
             >
-              다음: 애착 유형 검사
-            </Link>
+              {submitting ? "가입 처리 중..." : "다음: 애착 유형 검사"}
+            </button>
           </div>
 
         </div>

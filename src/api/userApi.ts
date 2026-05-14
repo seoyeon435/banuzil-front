@@ -172,3 +172,123 @@ export function logout(): void {
 export function isLoggedIn(): boolean {
   return !!localStorage.getItem("accessToken");
 }
+
+// ── 회원가입 ────────────────────────────────────────
+// POST /api/users/signup
+// 응답에 토큰이 포함되지 않으므로, 가입 성공 후 login()을 호출해서 세션을 확보한다.
+export interface SignupRequest {
+  email: string;
+  password: string;
+  nickname: string;
+  gender: string;
+  mbti: string;
+}
+
+export async function signup(payload: SignupRequest): Promise<void> {
+  console.log("[API] POST /api/users/signup 요청", { email: payload.email });
+  try {
+    const response = await apiClient.post("/api/users/signup", payload);
+    console.log("[API] POST /api/users/signup 응답", { status: response.status, data: response.data });
+  } catch (error) {
+    console.log("[API] POST /api/users/signup 실패", {
+      status: axios.isAxiosError(error) ? error.response?.status ?? null : null,
+    });
+    throw error;
+  }
+}
+
+export function getSignupErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return "회원가입 처리 중 오류가 발생했습니다.";
+  }
+  const status = error.response?.status;
+  if (status === 409) return "이미 가입된 이메일입니다.";
+  if (status === 400) return "입력 내용을 다시 확인해주세요.";
+  if (status === 500) return "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  if (error.message === "Network Error" || !error.response) {
+    return "서버에 연결할 수 없습니다.";
+  }
+  return "회원가입 처리 중 오류가 발생했습니다.";
+}
+
+// ── 프로필 수정 ─────────────────────────────────────
+// PATCH /api/users/profile-edit
+export interface ProfileEditRequest {
+  nickname: string;
+  gender: string;
+  mbti: string;
+}
+
+export interface UserProfile {
+  email: string;
+  nickname: string;
+  gender: string;
+  mbti: string;
+  friendCode: string;
+  attachmentType: string;
+  attachmentTypeDescription: string;
+  joinDate: string;
+}
+
+export async function updateProfile(payload: ProfileEditRequest): Promise<UserProfile> {
+  console.log("[API] PATCH /api/users/profile-edit 요청", payload);
+  const response = await apiClient.patch<UserProfile>("/api/users/profile-edit", payload);
+  console.log("[API] PATCH /api/users/profile-edit 응답", response.data);
+
+  // 캐시된 currentUser도 함께 갱신해 마이페이지가 즉시 새 닉네임을 보이게 한다.
+  saveCurrentUser({
+    email: response.data.email,
+    nickname: response.data.nickname,
+  });
+
+  return response.data;
+}
+
+export function getProfileEditErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return "프로필 수정 중 오류가 발생했습니다.";
+  }
+  const status = error.response?.status;
+  if (status === 400) return "입력 내용을 다시 확인해주세요.";
+  if (status === 401) return "로그인이 만료되었어요. 다시 로그인해주세요.";
+  if (status === 500) return "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  if (error.message === "Network Error" || !error.response) {
+    return "서버에 연결할 수 없습니다.";
+  }
+  return "프로필 수정 중 오류가 발생했습니다.";
+}
+
+// 전체 프로필 조회 (UserProfile 형태로 반환) — ProfilePage 표시용.
+export async function fetchFullUserProfile(): Promise<UserProfile | null> {
+  try {
+    const response = await apiClient.get<UserProfile>("/api/users/profile");
+    console.log("[API] GET /api/users/profile (full) 응답", response.data);
+
+    // 캐시된 currentUser도 함께 동기화.
+    saveCurrentUser({
+      email: response.data.email,
+      nickname: response.data.nickname,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("[API] GET /api/users/profile (full) failed:", error);
+    return null;
+  }
+}
+
+// ── 회원탈퇴 ────────────────────────────────────────
+// DELETE /api/users/withdraw — soft delete (서버단). 성공 시 로컬 토큰도 삭제한다.
+export async function withdrawAccount(): Promise<void> {
+  console.log("[API] DELETE /api/users/withdraw 요청");
+  try {
+    await apiClient.delete("/api/users/withdraw");
+    console.log("[API] DELETE /api/users/withdraw 성공 — 로컬 토큰 제거");
+    logout();
+  } catch (error) {
+    console.log("[API] DELETE /api/users/withdraw 실패", {
+      status: axios.isAxiosError(error) ? error.response?.status ?? null : null,
+    });
+    throw error;
+  }
+}
