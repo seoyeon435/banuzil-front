@@ -20,6 +20,8 @@ export interface CurrentUser {
   email?: string;
   nickname?: string;
   userId?: string;
+  gender?: string;
+  mbti?: string;
 }
 
 const CURRENT_USER_KEY = "currentUser";
@@ -37,6 +39,7 @@ function saveCurrentUser(user: CurrentUser): void {
   const previous = getStoredCurrentUser();
   const next = { ...previous, ...user };
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent("currentUserChanged", { detail: next }));
 }
 
 function saveCurrentUserFromResponse(data: LoginResponse, fallbackEmail: string): void {
@@ -71,6 +74,8 @@ export async function fetchCurrentUserProfile(): Promise<CurrentUser | null> {
       email: readStringField(data, ["email", "loginId"]),
       nickname: readStringField(data, ["nickname", "name"]),
       userId: readStringField(data, ["userId", "id"]),
+      gender: readStringField(data, ["gender", "sex"]),
+      mbti: readStringField(data, ["mbti", "MBTI", "userMbti", "personalityType"]),
     };
     saveCurrentUser(user);
     return getStoredCurrentUser();
@@ -230,18 +235,42 @@ export interface UserProfile {
   joinDate: string;
 }
 
+function normalizeUserProfile(data: Record<string, unknown>): UserProfile {
+  return {
+    email: readStringField(data, ["email", "loginId"]) ?? "",
+    nickname: readStringField(data, ["nickname", "name"]) ?? "",
+    gender: readStringField(data, ["gender", "sex"]) ?? "",
+    mbti: readStringField(data, ["mbti", "MBTI", "userMbti", "personalityType"]) ?? "",
+    friendCode: readStringField(data, ["friendCode", "code"]) ?? "",
+    attachmentType: readStringField(data, ["attachmentType"]) ?? "",
+    attachmentTypeDescription: readStringField(data, ["attachmentTypeDescription", "attachmentDescription"]) ?? "",
+    joinDate: readStringField(data, ["joinDate", "createdAt"]) ?? "",
+  };
+}
+
+export function getGenderLabel(gender?: string): string {
+  const normalized = gender?.trim().toLowerCase();
+  if (!normalized) return "설정 필요";
+  if (["male", "m", "man", "남성", "남"].includes(normalized)) return "남성";
+  if (["female", "f", "woman", "여성", "여"].includes(normalized)) return "여성";
+  return gender ?? "설정 필요";
+}
+
 export async function updateProfile(payload: ProfileEditRequest): Promise<UserProfile> {
   console.log("[API] PATCH /api/users/profile-edit 요청", payload);
-  const response = await apiClient.patch<UserProfile>("/api/users/profile-edit", payload);
+  const response = await apiClient.patch<Record<string, unknown>>("/api/users/profile-edit", payload);
   console.log("[API] PATCH /api/users/profile-edit 응답", response.data);
+  const updated = normalizeUserProfile(response.data);
 
   // 캐시된 currentUser도 함께 갱신해 마이페이지가 즉시 새 닉네임을 보이게 한다.
   saveCurrentUser({
-    email: response.data.email,
-    nickname: response.data.nickname,
+    email: updated.email,
+    nickname: updated.nickname,
+    gender: updated.gender,
+    mbti: updated.mbti,
   });
 
-  return response.data;
+  return updated;
 }
 
 export function getProfileEditErrorMessage(error: unknown): string {
@@ -261,16 +290,19 @@ export function getProfileEditErrorMessage(error: unknown): string {
 // 전체 프로필 조회 (UserProfile 형태로 반환) — ProfilePage 표시용.
 export async function fetchFullUserProfile(): Promise<UserProfile | null> {
   try {
-    const response = await apiClient.get<UserProfile>("/api/users/profile");
+    const response = await apiClient.get<Record<string, unknown>>("/api/users/profile");
     console.log("[API] GET /api/users/profile (full) 응답", response.data);
+    const profile = normalizeUserProfile(response.data);
 
     // 캐시된 currentUser도 함께 동기화.
     saveCurrentUser({
-      email: response.data.email,
-      nickname: response.data.nickname,
+      email: profile.email,
+      nickname: profile.nickname,
+      gender: profile.gender,
+      mbti: profile.mbti,
     });
 
-    return response.data;
+    return profile;
   } catch (error) {
     console.error("[API] GET /api/users/profile (full) failed:", error);
     return null;

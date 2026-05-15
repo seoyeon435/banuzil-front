@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://two026-1-csc4004-2-2-sewing-1.onrender.com";
+const BASE_URL = "http://13.125.217.36:8080";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

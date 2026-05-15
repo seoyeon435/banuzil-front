@@ -22,8 +22,16 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
       setCurrentUser(profile);
     });
 
+    const handleCurrentUserChanged = (event: Event) => {
+      const next = (event as CustomEvent<CurrentUser>).detail;
+      setCurrentUser(next ?? getStoredCurrentUser());
+    };
+
+    window.addEventListener("currentUserChanged", handleCurrentUserChanged);
+
     return () => {
       mounted = false;
+      window.removeEventListener("currentUserChanged", handleCurrentUserChanged);
     };
   }, []);
 
@@ -34,6 +42,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
 
   const displayName = currentUser.nickname || fallbackNameFromEmail(currentUser.email);
   const initial = displayName.slice(0, 1).toUpperCase();
+  const mbtiLabel = currentUser.mbti?.trim() || "설정 필요";
 
   const navItems = [
     { path: "/mypage/profile", icon: User, label: "프로필", emoji: "👤" },
@@ -60,7 +69,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
             <div className="min-w-0">
               <h3 className="text-lg font-semibold text-[#1A1A2E] truncate">{displayName}</h3>
               <span className="inline-block px-3 py-1 bg-[#1A1A2E]/10 text-[#1A1A2E] text-xs rounded-full mt-1">
-                ENFP
+                {mbtiLabel}
               </span>
             </div>
           </div>

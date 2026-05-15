@@ -13,6 +13,27 @@ export interface SewingSession {
   [key: string]: unknown;
 }
 
+export interface SewingRoundInfo {
+  sessionId?: number;
+  roomId?: number;
+  currentRound?: number;
+  roundNumber?: number;
+  title?: string;
+  label?: string;
+  question?: string;
+  guide?: string;
+  instruction?: string;
+  aiMessage?: string;
+  mediatorMessage?: string;
+  myAnswer?: string;
+  partnerAnswer?: string;
+  status?: string;
+  isCompleted?: boolean;
+  nextRound?: SewingRoundInfo;
+  round?: SewingRoundInfo;
+  [key: string]: unknown;
+}
+
 // ── sessionId 파싱 헬퍼 ────────────────────────────
 // POST /api/sewings 응답이 string | number | { sessionId: number } 등 불확실하므로 유연하게 처리
 function parseSessionId(data: unknown): number | null {
@@ -103,7 +124,8 @@ export async function createSewingSession(): Promise<number | null> {
 export async function submitSewingRound(
   sessionId: number,
   round: number,
-  content: string
+  content: string,
+  options?: { demoMode?: boolean }
 ): Promise<unknown> {
   const shouldCallRealApi = isRealSewingSessionId(sessionId);
   logAccessTokenPresence();
@@ -115,7 +137,7 @@ export async function submitSewingRound(
   }
 
   const url = `/api/sewings/${sessionId}/${round}`;
-  const body = { content };
+  const body = options?.demoMode ? { content, demoMode: true, isDemo: true } : { content };
   console.log("[Sewing] 라운드 저장 요청 URL", url);
   console.log("[Sewing] 라운드 저장 body", body);
 
@@ -127,6 +149,18 @@ export async function submitSewingRound(
     logSewingFailure("round 저장", error);
     throw error;
   }
+}
+
+// ── 현재 라운드 조회 ────────────────────────────────
+// 우선 전용 API를 사용하고, 백엔드가 아직 미구현이면 호출부에서 session-list로 fallback합니다.
+export async function getCurrentSewingRound(sessionId: number): Promise<SewingRoundInfo> {
+  logAccessTokenPresence();
+  const url = `/api/sewings/${sessionId}/current-round`;
+  console.log("[Sewing] 현재 라운드 조회 요청 URL", url);
+
+  const response = await apiClient.get(url);
+  console.log("[Sewing] 현재 라운드 조회 응답", response.data);
+  return response.data as SewingRoundInfo;
 }
 
 // ── 3. 세션 참여 ────────────────────────────

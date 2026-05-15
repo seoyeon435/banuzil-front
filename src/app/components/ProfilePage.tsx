@@ -5,6 +5,7 @@ import StitchDivider from "./ui/StitchDivider";
 import { getCurrentDisplayUser } from "../utils/displayUser";
 import {
   fetchFullUserProfile,
+  getGenderLabel,
   getProfileEditErrorMessage,
   updateProfile,
   type UserProfile,
@@ -32,7 +33,7 @@ export default function ProfilePage() {
   const nickname = profile?.nickname || fallbackUser.nickname;
   const email = profile?.email || fallbackUser.email || "이메일 정보 없음";
   const initial = (nickname.slice(0, 1) || "?").toUpperCase();
-  const mbti = profile?.mbti || "—";
+  const mbti = profile?.mbti?.trim() || "미입력";
   // BE가 'FEARFUL_AVOIDANT' 같은 enum을 보내올 때 그대로 표시하면 카드가 깨지므로
   // BE의 한글 description(attachmentTypeDescription) 우선, 없으면 enum 매핑, 그것도 없으면 '검사 전'.
   const attachmentTypeLabel = profile?.attachmentTypeDescription
@@ -119,7 +120,7 @@ export default function ProfilePage() {
                 <span className="text-4xl sm:text-5xl font-bold text-[#6F7787]">{mbti}</span>
               </div>
               <p className="text-sm text-[#6F7787]">
-                {profile?.gender ? `성별: ${profile.gender}` : "회원가입 정보 기반"}
+                성별: {getGenderLabel(profile?.gender)}
               </p>
             </div>
           </div>

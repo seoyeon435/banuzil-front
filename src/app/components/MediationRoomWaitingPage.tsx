@@ -78,6 +78,7 @@ export default function MediationRoomWaitingPage() {
     }
 
     sessionStorage.setItem("sewingSessionJoined", "mock");
+    sessionStorage.setItem("sewingDemoMode", "true");
     console.log("[Sewing] mock 흐름: 생성자 대기 화면에서 입력 화면 이동", { sessionId });
     navigate("/mediation/input");
   };
