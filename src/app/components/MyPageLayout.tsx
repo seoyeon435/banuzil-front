@@ -43,29 +43,29 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFF8F4] flex flex-col lg:flex-row min-w-0 [word-break:keep-all] overflow-x-hidden">
-      <aside className="w-full lg:w-[280px] bg-white border-b lg:border-b-0 lg:border-r border-[#F0DFD0] lg:fixed lg:h-screen flex flex-col z-10">
-        <Link to="/" className="p-5 lg:p-6 border-b border-[#F0DFD0] hover:bg-[#FFF8F4] transition-colors">
+    <div className="min-h-screen bg-[#FAFAF7] flex flex-col lg:flex-row min-w-0 [word-break:keep-all] overflow-x-hidden">
+      <aside className="w-full lg:w-[280px] bg-white border-b lg:border-b-0 lg:border-r border-[#E5E2DC] lg:fixed lg:h-screen flex flex-col z-10">
+        <Link to="/" className="p-5 lg:p-6 border-b border-[#E5E2DC] hover:bg-[#FAFAF7] transition-colors">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🧵</span>
-            <span className="text-xl font-bold text-[#1F1410]">바느질</span>
+            <span className="text-xl font-bold text-[#1A1A2E]">바느질</span>
           </div>
         </Link>
 
-        <div className="p-5 lg:p-6 border-b border-[#F0DFD0]">
+        <div className="p-5 lg:p-6 border-b border-[#E5E2DC]">
           <div className="flex items-center gap-3 mb-3 min-w-0">
-            <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-xl font-bold flex-shrink-0">
+            <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-[#E8C8C0] ring-2 ring-[#1A1A2E] flex items-center justify-center text-[#1A1A2E] text-xl font-bold flex-shrink-0">
               {initial}
             </div>
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-[#1F1410] truncate">{displayName}</h3>
-              <span className="inline-block px-3 py-1 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full mt-1">
+              <h3 className="text-lg font-semibold text-[#1A1A2E] truncate">{displayName}</h3>
+              <span className="inline-block px-3 py-1 bg-[#1A1A2E]/10 text-[#1A1A2E] text-xs rounded-full mt-1">
                 ENFP
               </span>
             </div>
           </div>
-          <div className="rounded-xl bg-[#FFF8F4] border border-[#F0DFD0] p-3 text-xs text-[#7A5C4D] space-y-1 min-w-0">
-            <p className="font-semibold text-[#1F1410]">현재 로그인</p>
+          <div className="rounded-xl bg-[#FAFAF7] border border-[#E5E2DC] p-3 text-xs text-[#6F7787] space-y-1 min-w-0">
+            <p className="font-semibold text-[#1A1A2E]">현재 로그인</p>
             <p className="break-all">{currentUser.email ?? "이메일 정보 없음"}</p>
             <p className="break-words">닉네임: {displayName}</p>
             {currentUser.userId && <p>userId: {currentUser.userId}</p>}
@@ -81,8 +81,8 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
                 to={item.path}
                 className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-3 mb-0 lg:mb-1 rounded-xl lg:rounded-none transition-all whitespace-nowrap ${
                   isActive
-                    ? "bg-[#FF6347]/5 lg:border-l-4 border-[#FF6347] text-[#FF6347]"
-                    : "text-[#7A5C4D] hover:bg-[#FFE0CC] hover:text-[#1F1410]"
+                    ? "bg-[#1A1A2E]/5 lg:border-l-4 border-[#1A1A2E] text-[#1A1A2E]"
+                    : "text-[#6F7787] hover:bg-[#EFEDE7] hover:text-[#1A1A2E]"
                 }`}
               >
                 <span className="text-xl">{item.emoji}</span>
@@ -92,10 +92,10 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
           })}
         </nav>
 
-        <div className="hidden lg:block p-6 border-t border-[#F0DFD0]">
+        <div className="hidden lg:block p-6 border-t border-[#E5E2DC]">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-[#7A5C4D] hover:text-[#DC3545] transition-colors"
+            className="flex items-center gap-2 text-[#6F7787] hover:text-[#DC3545] transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span className="text-sm">로그아웃</span>

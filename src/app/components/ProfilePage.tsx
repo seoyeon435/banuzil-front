@@ -9,7 +9,7 @@ import {
   updateProfile,
   type UserProfile,
 } from "../../api/userApi";
-import { getAttachmentLabel } from "../../api/attachmentApi";
+import { getAttachmentLabel, getAttachmentMeaning } from "../../api/attachmentApi";
 
 const MBTI_OPTIONS = [
   "", "INTJ", "INTP", "ENTJ", "ENTP",
@@ -33,10 +33,13 @@ export default function ProfilePage() {
   const email = profile?.email || fallbackUser.email || "이메일 정보 없음";
   const initial = (nickname.slice(0, 1) || "?").toUpperCase();
   const mbti = profile?.mbti || "—";
-  const attachmentTypeLabel = profile?.attachmentType
-    ? getAttachmentLabel(profile.attachmentType)
-    : "검사 전";
-  const attachmentDescription = profile?.attachmentTypeDescription || "애착 유형 검사를 완료하면 표시돼요";
+  // BE가 'FEARFUL_AVOIDANT' 같은 enum을 보내올 때 그대로 표시하면 카드가 깨지므로
+  // BE의 한글 description(attachmentTypeDescription) 우선, 없으면 enum 매핑, 그것도 없으면 '검사 전'.
+  const attachmentTypeLabel = profile?.attachmentTypeDescription
+    || (profile?.attachmentType ? getAttachmentLabel(profile.attachmentType) : "검사 전");
+  const attachmentDescription = profile?.attachmentType
+    ? getAttachmentMeaning(profile.attachmentType)
+    : "애착 유형 검사를 완료하면 표시돼요";
   const joinDate = profile?.joinDate
     ? new Date(profile.joinDate).toLocaleDateString("ko-KR", {
         year: "numeric",
@@ -47,29 +50,29 @@ export default function ProfilePage() {
   return (
     <MyPageLayout>
       <div className="max-w-[1000px] min-w-0 [word-break:keep-all]">
-        <h1 className="text-[32px] sm:text-[36px] font-semibold text-[#1F1410] mb-8">내 프로필</h1>
+        <h1 className="text-[32px] sm:text-[36px] font-semibold text-[#1A1A2E] mb-8">내 프로필</h1>
 
         {/* Profile Info Card */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6 min-w-0">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(35,40,56,0.102)] mb-6 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6 min-w-0">
-            <div className="w-20 h-20 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-3xl font-bold flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-[#E8C8C0] ring-2 ring-[#1A1A2E] flex items-center justify-center text-[#1A1A2E] text-3xl font-bold flex-shrink-0">
               {initial}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2 min-w-0">
-                <h2 className="text-2xl font-semibold text-[#1F1410] break-words">{nickname}</h2>
+                <h2 className="text-2xl font-semibold text-[#1A1A2E] break-words">{nickname}</h2>
                 <button
                   onClick={() => setEditOpen(true)}
-                  className="px-4 py-1.5 text-sm border border-[#F0DFD0] text-[#7A5C4D] rounded-lg hover:border-[#FF6347] hover:text-[#FF6347] transition-all"
+                  className="px-4 py-1.5 text-sm border border-[#E5E2DC] text-[#6F7787] rounded-lg hover:border-[#1A1A2E] hover:text-[#1A1A2E] transition-all"
                 >
                   프로필 수정
                 </button>
               </div>
-              <p className="text-[#7A5C4D] mb-1 break-all">{email}</p>
-              <p className="text-sm text-[#7A5C4D]">가입일: {joinDate}</p>
+              <p className="text-[#6F7787] mb-1 break-all">{email}</p>
+              <p className="text-sm text-[#6F7787]">가입일: {joinDate}</p>
               {profile?.friendCode && (
-                <p className="text-sm text-[#7A5C4D] mt-1">
-                  내 친구코드: <span className="font-medium text-[#FF6347]">{profile.friendCode}</span>
+                <p className="text-sm text-[#6F7787] mt-1">
+                  내 친구코드: <span className="font-medium text-[#1A1A2E]">{profile.friendCode}</span>
                 </p>
               )}
             </div>
@@ -81,9 +84,9 @@ export default function ProfilePage() {
         {/* Attachment Type (primary) and MBTI (secondary) Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Attachment Type Card — 핵심 분석 기준 */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-l-4 border-l-[#5A9F7C] transition-all duration-300 min-w-0">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(35,40,56,0.102)] border-l-4 border-l-[#5A9F7C] transition-all duration-300 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <h3 className="text-xl font-semibold text-[#1F1410]">나의 애착유형</h3>
+              <h3 className="text-xl font-semibold text-[#1A1A2E]">나의 애착유형</h3>
               <Link to="/signup/attachment-survey" className="px-4 py-1.5 text-sm border border-[#5A9F7C] text-[#5A9F7C] rounded-lg hover:bg-[#5A9F7C]/5 transition-all">
                 {profile?.attachmentType ? "재검사" : "검사하기"}
               </Link>
@@ -92,30 +95,30 @@ export default function ProfilePage() {
 
             <div className="text-center mb-6">
               <div className="inline-block px-8 py-4 bg-[#5A9F7C]/10 rounded-2xl mb-3">
-                <span className="text-4xl sm:text-5xl font-bold text-[#5A9F7C]">{attachmentTypeLabel}</span>
+                <span className="text-4xl sm:text-5xl font-bold text-[#5A9F7C] break-keep">{attachmentTypeLabel}</span>
               </div>
-              <p className="text-sm text-[#7A5C4D]">{attachmentDescription}</p>
+              <p className="text-sm text-[#6F7787]">{attachmentDescription}</p>
             </div>
           </div>
 
           {/* MBTI Card — 선택 보조 정보 */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] border-l border-l-[#F0DFD0] hover:border-l-4 transition-all duration-300 min-w-0">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-[0_8px_32px_rgba(35,40,56,0.102)] border-l border-l-[#E5E2DC] hover:border-l-4 transition-all duration-300 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <h3 className="text-xl font-semibold text-[#1F1410]">나의 MBTI</h3>
+              <h3 className="text-xl font-semibold text-[#1A1A2E]">나의 MBTI</h3>
               <button
                 onClick={() => setEditOpen(true)}
-                className="px-4 py-1.5 text-sm border border-[#F0DFD0] text-[#7A5C4D] rounded-lg hover:border-[#FF6347] hover:text-[#FF6347] transition-all"
+                className="px-4 py-1.5 text-sm border border-[#E5E2DC] text-[#6F7787] rounded-lg hover:border-[#1A1A2E] hover:text-[#1A1A2E] transition-all"
               >
                 수정하기
               </button>
             </div>
-            <p className="text-xs text-[#7A5C4D] mb-5">선택 보조 정보 · 분석에 참고용으로 활용</p>
+            <p className="text-xs text-[#6F7787] mb-5">선택 보조 정보 · 분석에 참고용으로 활용</p>
 
             <div className="text-center mb-6">
-              <div className="inline-block px-8 py-4 bg-[#F0DFD0] rounded-2xl mb-3">
-                <span className="text-4xl sm:text-5xl font-bold text-[#7A5C4D]">{mbti}</span>
+              <div className="inline-block px-8 py-4 bg-[#E5E2DC] rounded-2xl mb-3">
+                <span className="text-4xl sm:text-5xl font-bold text-[#6F7787]">{mbti}</span>
               </div>
-              <p className="text-sm text-[#7A5C4D]">
+              <p className="text-sm text-[#6F7787]">
                 {profile?.gender ? `성별: ${profile.gender}` : "회원가입 정보 기반"}
               </p>
             </div>
@@ -175,29 +178,29 @@ function EditProfileModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-[440px] w-full p-6 sm:p-8">
-        <h2 className="text-xl font-semibold text-[#1F1410] mb-6">프로필 수정</h2>
+        <h2 className="text-xl font-semibold text-[#1A1A2E] mb-6">프로필 수정</h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1F1410] mb-2">닉네임</label>
+            <label className="block text-sm font-medium text-[#1A1A2E] mb-2">닉네임</label>
             <input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="w-full h-11 px-4 border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent"
+              className="w-full h-11 px-4 border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1F1410] mb-2">성별</label>
+            <label className="block text-sm font-medium text-[#1A1A2E] mb-2">성별</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setGender("female")}
                 className={`h-11 rounded-xl border-2 transition-all text-sm font-medium ${
                   gender === "female"
-                    ? "border-[#FF6347] bg-[#FF6347]/10 text-[#FF6347]"
-                    : "border-[#F0DFD0] text-[#7A5C4D]"
+                    ? "border-[#1A1A2E] bg-[#1A1A2E]/10 text-[#1A1A2E]"
+                    : "border-[#E5E2DC] text-[#6F7787]"
                 }`}
               >
                 여성
@@ -208,7 +211,7 @@ function EditProfileModal({
                 className={`h-11 rounded-xl border-2 transition-all text-sm font-medium ${
                   gender === "male"
                     ? "border-[#5A9F7C] bg-[#5A9F7C]/10 text-[#5A9F7C]"
-                    : "border-[#F0DFD0] text-[#7A5C4D]"
+                    : "border-[#E5E2DC] text-[#6F7787]"
                 }`}
               >
                 남성
@@ -217,11 +220,11 @@ function EditProfileModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1F1410] mb-2">MBTI</label>
+            <label className="block text-sm font-medium text-[#1A1A2E] mb-2">MBTI</label>
             <select
               value={mbti}
               onChange={(e) => setMbti(e.target.value)}
-              className="w-full h-11 px-4 border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347]"
+              className="w-full h-11 px-4 border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E]"
             >
               {MBTI_OPTIONS.map((type) => (
                 <option key={type || "none"} value={type}>
@@ -242,7 +245,7 @@ function EditProfileModal({
           <button
             onClick={onClose}
             disabled={submitting}
-            className="flex-1 h-11 rounded-full border-2 border-[#F0DFD0] text-[#7A5C4D] font-medium hover:bg-[#FFE0CC] transition-all disabled:opacity-50"
+            className="flex-1 h-11 rounded-full border-2 border-[#E5E2DC] text-[#6F7787] font-medium hover:bg-[#EFEDE7] transition-all disabled:opacity-50"
           >
             취소
           </button>
@@ -251,8 +254,8 @@ function EditProfileModal({
             disabled={!canSave}
             className={`flex-1 h-11 rounded-full font-medium transition-all ${
               canSave
-                ? "bg-[#FF6347] text-white hover:bg-[#E84028]"
-                : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
+                ? "bg-[#1A1A2E] text-white hover:bg-[#0F0F1F]"
+                : "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
             }`}
           >
             {submitting ? "저장 중..." : "저장"}

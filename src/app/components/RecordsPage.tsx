@@ -102,26 +102,25 @@ export default function RecordsPage() {
   const [filterType, setFilterType] = useState("전체 유형");
   const [filterPeriod, setFilterPeriod] = useState("기간 선택");
   const [filterTemp, setFilterTemp] = useState("all");
-  const [records, setRecords] = useState(MOCK_RECORDS);
+  // [MOCK 비활성화] 빈 배열로 시작 — API 결과만 사용. 실패해도 mock fallback 안 함.
+  const [records, setRecords] = useState<ReturnType<typeof sessionToRecord>[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     (async () => {
       try {
         const sessions = await getSewingSessionList();
-        if (sessions && sessions.length > 0) {
-          setRecords(sessions.map(sessionToRecord));
-        }
-        // 빈 배열이면 mock 유지
+        setRecords((sessions ?? []).map(sessionToRecord));
       } catch (error) {
-        console.error("[API] 세션 목록 조회 실패 → mock fallback 유지:", error);
+        console.error("[Records] 세션 목록 조회 실패 — 빈 화면 유지:", error);
+        setRecords([]);
       }
     })();
   }, []);
 
   const getTemperatureColor = (temp: number) => {
     if (temp >= 70) return { bg: "#FFE0E0", text: "#DC3545", emoji: "🔴" };
-    if (temp >= 50) return { bg: "#FFE9DD", text: "#D4956A", emoji: "🟡" };
+    if (temp >= 50) return { bg: "#EBE9F2", text: "#6F8197", emoji: "🟡" };
     return { bg: "#E0F4E8", text: "#5A9F7C", emoji: "🟢" };
   };
 
@@ -169,8 +168,8 @@ export default function RecordsPage() {
       <div className="max-w-[1100px]">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-[36px] font-semibold text-[#1F1410] mb-2">우리의 갈등 기록</h1>
-          <p className="text-[#7A5C4D] mb-6">두 사람이 함께 걸어온 갈등 회복의 여정이에요.</p>
+          <h1 className="text-[36px] font-semibold text-[#1A1A2E] mb-2">우리의 갈등 기록</h1>
+          <p className="text-[#6F7787] mb-6">두 사람이 함께 걸어온 갈등 회복의 여정이에요.</p>
 
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -186,8 +185,8 @@ export default function RecordsPage() {
                   onClick={() => setFilterStatus(key)}
                   className={`px-4 py-2 rounded-lg transition-all ${
                     filterStatus === key
-                      ? "bg-[#FF6347] text-white"
-                      : "bg-white border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC]"
+                      ? "bg-[#1A1A2E] text-white"
+                      : "bg-white border border-[#E5E2DC] text-[#6F7787] hover:bg-[#EFEDE7]"
                   }`}
                 >
                   {label}
@@ -199,7 +198,7 @@ export default function RecordsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 bg-white border border-[#F0DFD0] rounded-lg text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[#FF6347]"
+              className="px-4 py-2 bg-white border border-[#E5E2DC] rounded-lg text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1A1A2E]"
             >
               {conflictTypes.map((t) => (
                 <option key={t}>{t}</option>
@@ -210,7 +209,7 @@ export default function RecordsPage() {
             <select
               value={filterPeriod}
               onChange={(e) => setFilterPeriod(e.target.value)}
-              className="px-4 py-2 bg-white border border-[#F0DFD0] rounded-lg text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[#FF6347]"
+              className="px-4 py-2 bg-white border border-[#E5E2DC] rounded-lg text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1A1A2E]"
             >
               {periods.map((p) => (
                 <option key={p}>{p}</option>
@@ -221,7 +220,7 @@ export default function RecordsPage() {
             <select
               value={filterTemp}
               onChange={(e) => setFilterTemp(e.target.value)}
-              className="px-4 py-2 bg-white border border-[#F0DFD0] rounded-lg text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[#FF6347]"
+              className="px-4 py-2 bg-white border border-[#E5E2DC] rounded-lg text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1A1A2E]"
             >
               <option value="all">감정 온도 전체</option>
               <option value="high">🔴 높음 (70° 이상)</option>
@@ -242,14 +241,14 @@ export default function RecordsPage() {
             return (
               <div
                 key={record.id}
-                className={`bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(255,99,71,0.17)] hover:shadow-[0_12px_40px_rgba(255,99,71,0.23)] transition-all duration-300 border-l border-l-[#FF6347] ${
+                className={`bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(35,40,56,0.102)] hover:shadow-[0_12px_40px_rgba(35,40,56,0.138)] transition-all duration-300 border-l border-l-[#1A1A2E] ${
                   isCompleted ? "hover:border-l-4" : "border-l-4"
                 }`}
               >
                 {/* Top Row */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-[#7A5C4D] font-medium">{record.date}</span>
+                    <span className="text-[#6F7787] font-medium">{record.date}</span>
                     <span
                       className="px-3 py-1 rounded-full text-sm font-medium"
                       style={{ backgroundColor: tempStyle.bg, color: tempStyle.text }}
@@ -258,12 +257,12 @@ export default function RecordsPage() {
                     </span>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#FFE9DD] text-[#D4956A]"
+                        isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#EBE9F2] text-[#6F8197]"
                       }`}
                     >
                       {isCompleted ? "완료됨 ✓" : "진행중"}
                     </span>
-                    <span className="px-3 py-1 bg-[#FFE0CC] text-[#1F1410] rounded-full text-sm">
+                    <span className="px-3 py-1 bg-[#EFEDE7] text-[#1A1A2E] rounded-full text-sm">
                       {record.type}
                     </span>
                   </div>
@@ -271,31 +270,31 @@ export default function RecordsPage() {
 
                 {/* Status Badges */}
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.partnerInputDone ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#F0DFD0] text-[#7A5C4D]"}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.partnerInputDone ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#E5E2DC] text-[#6F7787]"}`}>
                     {record.partnerInputDone ? "✓ 상대방 입장 입력 완료" : "⏳ 상대방 입장 대기중"}
                   </span>
                   {record.aiMediated && (
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#FF6347]/10 text-[#FF6347]">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#1A1A2E]/10 text-[#1A1A2E]">
                       ✓ AI 중재 완료
                     </span>
                   )}
                   {record.recoverySaved && (
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#FFE9DD] text-[#D4956A]">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#EBE9F2] text-[#6F8197]">
                       ✓ 회복 문장 저장됨
                     </span>
                   )}
                 </div>
 
                 {/* Preview Text */}
-                <p className="text-[#7A5C4D] mb-4">{record.preview}</p>
+                <p className="text-[#6F7787] mb-4">{record.preview}</p>
 
                 {/* Bottom Action */}
                 {isCompleted ? (
-                  <button className="text-[#FF6347] hover:text-[#E84028] font-medium flex items-center gap-1 transition-colors">
+                  <button className="text-[#1A1A2E] hover:text-[#0F0F1F] font-medium flex items-center gap-1 transition-colors">
                     최종 보고서 보기 →
                   </button>
                 ) : (
-                  <button className="px-6 py-2.5 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all flex items-center gap-2">
+                  <button className="px-6 py-2.5 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all flex items-center gap-2">
                     이어서 중재하기 →
                   </button>
                 )}
@@ -304,7 +303,7 @@ export default function RecordsPage() {
           })}
 
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-[#7A5C4D]">
+            <div className="text-center py-16 text-[#6F7787]">
               <p className="text-4xl mb-4">📭</p>
               <p>조건에 맞는 갈등 기록이 없어요.</p>
             </div>
@@ -316,10 +315,10 @@ export default function RecordsPage() {
           <button
             onClick={() => moveToPage(safeCurrentPage - 1)}
             disabled={safeCurrentPage === 1}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E2DC] transition-all ${
               safeCurrentPage === 1
                 ? "text-[#C9B8A8] cursor-not-allowed"
-                : "text-[#7A5C4D] hover:bg-[#FFE0CC]"
+                : "text-[#6F7787] hover:bg-[#EFEDE7]"
             }`}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -330,8 +329,8 @@ export default function RecordsPage() {
               onClick={() => moveToPage(page)}
               className={`w-8 h-8 flex items-center justify-center rounded-lg font-medium transition-all ${
                 safeCurrentPage === page
-                  ? "bg-[#FF6347] text-white"
-                  : "border border-[#F0DFD0] text-[#7A5C4D] hover:bg-[#FFE0CC]"
+                  ? "bg-[#1A1A2E] text-white"
+                  : "border border-[#E5E2DC] text-[#6F7787] hover:bg-[#EFEDE7]"
               }`}
             >
               {page}
@@ -340,10 +339,10 @@ export default function RecordsPage() {
           <button
             onClick={() => moveToPage(safeCurrentPage + 1)}
             disabled={safeCurrentPage === totalPages}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#F0DFD0] transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E2DC] transition-all ${
               safeCurrentPage === totalPages
                 ? "text-[#C9B8A8] cursor-not-allowed"
-                : "text-[#7A5C4D] hover:bg-[#FFE0CC]"
+                : "text-[#6F7787] hover:bg-[#EFEDE7]"
             }`}
           >
             <ChevronRight className="w-4 h-4" />

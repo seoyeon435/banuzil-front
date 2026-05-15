@@ -16,14 +16,6 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const getPasswordStrength = (pwd: string) => {
-    if (pwd.length === 0) return 0;
-    if (pwd.length < 8) return 1;
-    if (pwd.length < 12) return 2;
-    return 3;
-  };
-
-  const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
   const mbtiTypes = [
@@ -66,7 +58,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Decorative */}
-      <div className="w-1/2 bg-gradient-to-br from-[#FF6347] to-[#E84028] flex flex-col items-center justify-center text-white relative overflow-hidden">
+      <div className="w-1/2 bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1F] flex flex-col items-center justify-center text-white relative overflow-hidden">
         {/* Decorative Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -122,10 +114,10 @@ export default function SignupPage() {
         <div className="w-full max-w-[400px]">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-[28px] font-bold text-[#1F1410] mb-2">회원가입</h1>
-            <p className="text-[#7A5C4D]">
+            <h1 className="text-[28px] font-bold text-[#1A1A2E] mb-2">회원가입</h1>
+            <p className="text-[#6F7787]">
               이미 계정이 있으신가요?{" "}
-              <Link to="/login" className="text-[#FF6347] underline hover:text-[#E84028]">
+              <Link to="/login" className="text-[#1A1A2E] underline hover:text-[#0F0F1F]">
                 로그인
               </Link>
             </p>
@@ -135,90 +127,82 @@ export default function SignupPage() {
           <div className="space-y-4">
             {/* Name Input */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 이름 또는 닉네임
               </label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6F7787]" />
                 <input
                   type="text"
                   placeholder="표시될 이름을 입력해주세요"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Email Input */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 이메일
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6F7787]" />
                 <input
                   type="email"
                   placeholder="example@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-4 bg-white border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 비밀번호
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6F7787]" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="8자 이상 입력해주세요"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A5C4D] hover:text-[#1F1410]"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6F7787] hover:text-[#1A1A2E]"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
 
-              {/* Password Strength Bar */}
-              {password.length > 0 && (
-                <div className="flex gap-1 mt-2">
-                  <div className={`h-1 flex-1 rounded ${passwordStrength >= 1 ? 'bg-[#DC3545]' : 'bg-[#F0DFD0]'}`} />
-                  <div className={`h-1 flex-1 rounded ${passwordStrength >= 2 ? 'bg-[#D4956A]' : 'bg-[#F0DFD0]'}`} />
-                  <div className={`h-1 flex-1 rounded ${passwordStrength >= 3 ? 'bg-[#5A9F7C]' : 'bg-[#F0DFD0]'}`} />
-                </div>
-              )}
             </div>
 
             {/* Password Confirm Input */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 비밀번호 확인
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7A5C4D]" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6F7787]" />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="비밀번호를 다시 입력해주세요"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all"
+                  className="w-full h-12 pl-12 pr-12 bg-white border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A5C4D] hover:text-[#1F1410]"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6F7787] hover:text-[#1A1A2E]"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -230,7 +214,7 @@ export default function SignupPage() {
 
             {/* Gender Select */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 성별
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -239,8 +223,8 @@ export default function SignupPage() {
                   onClick={() => setGender("female")}
                   className={`flex items-center justify-center gap-2 h-12 rounded-xl border-2 transition-all font-medium text-sm ${
                     gender === "female"
-                      ? "border-[#FF6347] bg-[#FF6347]/10 text-[#FF6347]"
-                      : "border-[#F0DFD0] text-[#7A5C4D] hover:border-[#FF6347]/50 hover:bg-[#FFF8F4]"
+                      ? "border-[#1A1A2E] bg-[#1A1A2E]/10 text-[#1A1A2E]"
+                      : "border-[#E5E2DC] text-[#6F7787] hover:border-[#1A1A2E]/50 hover:bg-[#FAFAF7]"
                   }`}
                 >
                   <Venus className="w-4 h-4" />
@@ -252,7 +236,7 @@ export default function SignupPage() {
                   className={`flex items-center justify-center gap-2 h-12 rounded-xl border-2 transition-all font-medium text-sm ${
                     gender === "male"
                       ? "border-[#5A9F7C] bg-[#5A9F7C]/10 text-[#5A9F7C]"
-                      : "border-[#F0DFD0] text-[#7A5C4D] hover:border-[#5A9F7C]/50 hover:bg-[#FFF8F4]"
+                      : "border-[#E5E2DC] text-[#6F7787] hover:border-[#5A9F7C]/50 hover:bg-[#FAFAF7]"
                   }`}
                 >
                   <Mars className="w-4 h-4" />
@@ -263,20 +247,20 @@ export default function SignupPage() {
 
             {/* MBTI Select */}
             <div>
-              <label className="block text-sm font-medium text-[#1F1410] mb-2">
+              <label className="block text-sm font-medium text-[#1A1A2E] mb-2">
                 나의 MBTI (선택사항)
               </label>
               <select
                 value={mbti}
                 onChange={(e) => setMbti(e.target.value)}
-                className="w-full h-12 px-4 bg-white border border-[#F0DFD0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6347] focus:border-transparent transition-all text-[#1F1410]"
+                className="w-full h-12 px-4 bg-white border border-[#E5E2DC] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A2E] focus:border-transparent transition-all text-[#1A1A2E]"
               >
                 <option value="">선택해주세요</option>
                 {mbtiTypes.map((type) => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
-              <p className="text-xs text-[#7A5C4D] mt-1">나중에 설정해도 괜찮아요</p>
+              <p className="text-xs text-[#6F7787] mt-1">나중에 설정해도 괜찮아요</p>
             </div>
 
             {/* Error message */}
@@ -293,8 +277,8 @@ export default function SignupPage() {
               disabled={!canSubmit}
               className={`block w-full h-[52px] text-center rounded-full font-medium transition-all ${
                 canSubmit
-                  ? "bg-[#FF6347] text-white hover:bg-[#E84028] shadow-[0_4px_16px_rgba(255,99,71,0.25)] hover:shadow-[0_6px_20px_rgba(255,99,71,0.35)]"
-                  : "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
+                  ? "bg-[#1A1A2E] text-white hover:bg-[#0F0F1F] shadow-[0_4px_16px_rgba(35,40,56,0.15)] hover:shadow-[0_6px_20px_rgba(35,40,56,0.21)]"
+                  : "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
               }`}
             >
               {submitting ? "가입 처리 중..." : "다음: 애착 유형 검사"}

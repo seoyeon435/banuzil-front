@@ -3,9 +3,9 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import { Copy, Check, Heart, RefreshCw } from "lucide-react";
 import { addPartnerByCode, getConnectedPartners, type ConnectedPartner } from "../../api/partnerApi";
+import { fetchFullUserProfile, type UserProfile } from "../../api/userApi";
+import { getAttachmentLabel } from "../../api/attachmentApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
-
-const MOCK_CODE = "COUPLE-4821";
 
 const recentConflicts = [
   { id: 1, date: "2025.03.15", type: "가치관 차이", status: "completed", temp: 38 },
@@ -35,6 +35,7 @@ export default function FriendsPage() {
   const [codeInput, setCodeInput] = useState("");
   const [inputError, setInputError] = useState("");
   const [partner, setPartner] = useState<ConnectedPartner | null>(null);
+  const [myProfile, setMyProfile] = useState<UserProfile | null>(null);
   const { currentName, currentInitial, partnerName: fallbackPartnerName, partnerInitial: fallbackPartnerInitial } = useDisplayNames();
 
   const refreshConnectedPartner = async () => {
@@ -53,10 +54,39 @@ export default function FriendsPage() {
 
   useEffect(() => {
     void refreshConnectedPartner();
+    // 본인 프로필 (friendCode + attachmentType + mbti) 로드
+    void (async () => {
+      const profile = await fetchFullUserProfile();
+      if (profile) setMyProfile(profile);
+    })();
   }, []);
 
+  // 코드 공유 화면일 때만 3초마다 연결 여부를 폴링.
+  // 상대가 코드를 입력해 연결되면 자동으로 connected 단계로 전환된다.
+  useEffect(() => {
+    if (step !== "code_shown") return;
+
+    const intervalId = window.setInterval(() => {
+      void refreshConnectedPartner();
+    }, 3000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refreshConnectedPartner();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [step]);
+
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(MOCK_CODE).catch(() => {});
+    const code = myProfile?.friendCode;
+    if (!code) return;
+    navigator.clipboard.writeText(code).catch(() => {});
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
   };
@@ -100,7 +130,7 @@ export default function FriendsPage() {
       <MyPageLayout>
         <div className="max-w-[1100px] mx-auto w-full">
           {/* 연결 완료 배너 */}
-          <div className="bg-gradient-to-r from-[#FF6347] to-[#E84028] rounded-2xl p-6 mb-8 text-white">
+          <div className="bg-gradient-to-r from-[#1A1A2E] to-[#0F0F1F] rounded-2xl p-6 mb-8 text-white">
             <div className="flex items-center gap-4 mb-2">
               <Heart className="w-8 h-8 fill-white flex-shrink-0" />
               <div>
@@ -115,72 +145,77 @@ export default function FriendsPage() {
             </p>
           </div>
 
-          <h1 className="text-[36px] font-semibold text-[#1F1410] mb-2">우리 공간</h1>
-          <p className="text-[#7A5C4D] mb-8">함께 쌓아가는 관계 기록</p>
+          <h1 className="text-[36px] font-semibold text-[#1A1A2E] mb-2">우리 공간</h1>
+          <p className="text-[#6F7787] mb-8">함께 쌓아가는 관계 기록</p>
 
           {/* 커플 요약 */}
-          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-8">
-            <h2 className="text-base font-semibold text-[#1F1410] mb-5">{currentName}님과 {partnerName}님의 공간</h2>
+          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(35,40,56,0.102)] mb-8">
+            <h2 className="text-base font-semibold text-[#1A1A2E] mb-5">{currentName}님과 {partnerName}님의 공간</h2>
             <div className="flex flex-col sm:flex-row items-center gap-8 mb-6">
               <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#FF6347] flex items-center justify-center text-[#1F1410] text-2xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-[#E8C8C0] ring-2 ring-[#1A1A2E] flex items-center justify-center text-[#1A1A2E] text-2xl font-bold">
                   {currentInitial}
                 </div>
-                <p className="text-sm font-medium text-[#1F1410]">{currentName} (나)</p>
-                <span className="px-2 py-0.5 bg-[#5A9F7C]/10 text-[#5A9F7C] text-xs rounded-full">안정형</span>
+                <p className="text-sm font-medium text-[#1A1A2E]">{currentName} (나)</p>
+                <span className="px-2 py-0.5 bg-[#5A9F7C]/10 text-[#5A9F7C] text-xs rounded-full">
+                  {myProfile?.attachmentType ? getAttachmentLabel(myProfile.attachmentType) : "검사 전"}
+                </span>
+                {myProfile?.mbti && (
+                  <span className="px-2 py-0.5 bg-[#1A1A2E]/10 text-[#1A1A2E] text-xs rounded-full">{myProfile.mbti}</span>
+                )}
               </div>
               <div className="w-full sm:flex-1 flex flex-col items-center gap-2">
                 <span className="text-3xl">💑</span>
-                <div className="w-full h-[2px] bg-gradient-to-r from-[#FF6347] to-[#D4956A] rounded-full" />
-                <p className="text-xs text-[#7A5C4D]">함께한 지 243일 · EFT 중재 {recentConflicts.length}회</p>
+                <div className="w-full h-[2px] bg-gradient-to-r from-[#1A1A2E] to-[#6F8197] rounded-full" />
+                <p className="text-xs text-[#6F7787]">함께한 지 243일 · EFT 중재 {recentConflicts.length}회</p>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-[#FFB89A] ring-2 ring-[#D4956A] flex items-center justify-center text-[#1F1410] text-2xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-[#E8C8C0] ring-2 ring-[#6F8197] flex items-center justify-center text-[#1A1A2E] text-2xl font-bold">
                   {partnerInitial}
                 </div>
-                <p className="text-sm font-medium text-[#1F1410]">{partnerName}</p>
-                <span className="px-2 py-0.5 bg-[#D4956A]/10 text-[#D4956A] text-xs rounded-full">{partnerAttachment}</span>
+                <p className="text-sm font-medium text-[#1A1A2E]">{partnerName}</p>
+                <span className="px-2 py-0.5 bg-[#6F8197]/10 text-[#6F8197] text-xs rounded-full">{partnerAttachment}</span>
                 {partner?.mbti && (
-                  <span className="px-2 py-0.5 bg-[#FF6347]/10 text-[#FF6347] text-xs rounded-full">{partnerMbti}</span>
+                  <span className="px-2 py-0.5 bg-[#1A1A2E]/10 text-[#1A1A2E] text-xs rounded-full">{partnerMbti}</span>
                 )}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#FFE0CC] rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-[#1F1410]">3</p>
-                <p className="text-sm text-[#7A5C4D] mt-1">갈등 해결 완료</p>
+              <div className="bg-[#EFEDE7] rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-[#1A1A2E]">3</p>
+                <p className="text-sm text-[#6F7787] mt-1">갈등 해결 완료</p>
               </div>
               <div className="bg-[#E0F4E8] rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-[#5A9F7C]">38°</p>
-                <p className="text-sm text-[#7A5C4D] mt-1">최근 갈등 온도</p>
+                <p className="text-sm text-[#6F7787] mt-1">최근 갈등 온도</p>
               </div>
-              <div className="bg-[#FF6347]/5 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-[#FF6347]">5</p>
-                <p className="text-sm text-[#7A5C4D] mt-1">회복 문장 저장됨</p>
+              <div className="bg-[#1A1A2E]/5 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-[#1A1A2E]">5</p>
+                <p className="text-sm text-[#6F7787] mt-1">회복 문장 저장됨</p>
               </div>
             </div>
           </div>
 
           {/* 패턴 & 약속 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
-              <h3 className="font-semibold text-[#1F1410] mb-2">자주 반복되는 갈등 패턴</h3>
-              <p className="text-xs text-[#7A5C4D] mb-4">최근 우리 사이에서 반복된 감정 패턴을 확인해보세요.</p>
+            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
+              <h3 className="font-semibold text-[#1A1A2E] mb-2">자주 반복되는 갈등 패턴</h3>
+              <p className="text-xs text-[#6F7787] mb-4">최근 우리 사이에서 반복된 감정 패턴을 확인해보세요.</p>
               <div className="space-y-2">
                 {repeatingPatterns.map((p, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-[#1F1410]">
-                    <span className="text-[#FF6347] font-bold flex-shrink-0">↩</span>
+                  <div key={i} className="flex items-start gap-2 text-sm text-[#1A1A2E]">
+                    <span className="text-[#1A1A2E] font-bold flex-shrink-0">↩</span>
                     <span>{p}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(255,99,71,0.13)]">
-              <h3 className="font-semibold text-[#1F1410] mb-2">둘만의 작은 약속</h3>
-              <p className="text-xs text-[#7A5C4D] mb-4">함께 정한 우리만의 규칙이에요.</p>
+            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
+              <h3 className="font-semibold text-[#1A1A2E] mb-2">둘만의 작은 약속</h3>
+              <p className="text-xs text-[#6F7787] mb-4">함께 정한 우리만의 규칙이에요.</p>
               <div className="space-y-2">
                 {sharedPromises.map((p, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-[#1F1410]">
+                  <div key={i} className="flex items-start gap-2 text-sm text-[#1A1A2E]">
                     <span className="text-[#5A9F7C] font-bold flex-shrink-0">✓</span>
                     <span>{p}</span>
                   </div>
@@ -192,8 +227,8 @@ export default function FriendsPage() {
           {/* 최근 갈등 기록 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[#1F1410]">최근 갈등 기록</h2>
-              <Link to="/mypage/records" className="text-sm text-[#FF6347] hover:text-[#E84028] underline">
+              <h2 className="text-xl font-semibold text-[#1A1A2E]">최근 갈등 기록</h2>
+              <Link to="/mypage/records" className="text-sm text-[#1A1A2E] hover:text-[#0F0F1F] underline">
                 전체 보기 →
               </Link>
             </div>
@@ -201,19 +236,19 @@ export default function FriendsPage() {
               {recentConflicts.map((record) => {
                 const isCompleted = record.status === "completed";
                 return (
-                  <div key={record.id} className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(255,99,71,0.13)] flex items-center justify-between">
+                  <div key={record.id} className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(35,40,56,0.078)] flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <span className="text-2xl">{isCompleted ? "✅" : "🔄"}</span>
                       <div>
-                        <p className="font-medium text-[#1F1410]">{record.type}</p>
-                        <p className="text-sm text-[#7A5C4D]">{record.date}</p>
+                        <p className="font-medium text-[#1A1A2E]">{record.type}</p>
+                        <p className="text-sm text-[#6F7787]">{record.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#FFE9DD] text-[#D4956A]"}`}>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#EBE9F2] text-[#6F8197]"}`}>
                         {isCompleted ? "AI 중재 완료" : `${partnerName}님 입장 대기`}
                       </span>
-                      <span className="text-sm text-[#7A5C4D]">{record.temp}°</span>
+                      <span className="text-sm text-[#6F7787]">{record.temp}°</span>
                     </div>
                   </div>
                 );
@@ -222,14 +257,14 @@ export default function FriendsPage() {
           </div>
 
           {/* 중재 시작 CTA */}
-          <div className="bg-gradient-to-br from-[#FF6347] to-[#E84028] rounded-2xl p-8 text-white text-center">
+          <div className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1F] rounded-2xl p-8 text-white text-center">
             <p className="text-xl font-semibold mb-2">오늘의 갈등 중재 시작하기</p>
             <p className="text-white/80 mb-6 text-sm">
               오늘 우리 사이에 어떤 일이 있었나요? EFT 흐름으로 함께 정리해드려요.
             </p>
             <Link
               to="/mediation/start"
-              className="inline-block px-10 py-3 bg-white text-[#FF6347] font-semibold rounded-full hover:bg-[#FFF8F4] transition-all"
+              className="inline-block px-10 py-3 bg-white text-[#1A1A2E] font-semibold rounded-full hover:bg-[#FAFAF7] transition-all"
             >
               갈등 중재 시작하기 →
             </Link>
@@ -243,34 +278,34 @@ export default function FriendsPage() {
   return (
     <MyPageLayout>
       <div className="w-full">
-        <h1 className="text-[36px] font-semibold text-[#1F1410] mb-2">우리 공간</h1>
-        <p className="text-[#7A5C4D] mb-10">
+        <h1 className="text-[36px] font-semibold text-[#1A1A2E] mb-2">우리 공간</h1>
+        <p className="text-[#6F7787] mb-10">
           연인과 연결되면 둘만의 갈등 중재 공간이 열려요.
         </p>
 
         <div className="max-w-[680px] mx-auto w-full">
         {/* 연결 전 안내 */}
         {step === "none" && (
-          <div className="bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-[#FF6347]/10 flex items-center justify-center text-4xl mx-auto mb-6">
+          <div className="bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(35,40,56,0.102)] mb-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-[#1A1A2E]/10 flex items-center justify-center text-4xl mx-auto mb-6">
               💑
             </div>
-            <h2 className="text-xl font-semibold text-[#1F1410] mb-3">
+            <h2 className="text-xl font-semibold text-[#1A1A2E] mb-3">
               아직 연결된 연인이 없습니다
             </h2>
-            <p className="text-[#7A5C4D] leading-relaxed mb-8">
+            <p className="text-[#6F7787] leading-relaxed mb-8">
               초대 코드를 생성하거나, 상대방이 보낸 코드를 입력해 연결할 수 있어요.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={() => setStep("code_shown")}
-                className="py-4 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all font-medium shadow-[0_4px_16px_rgba(255,99,71,0.25)]"
+                className="py-4 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all font-medium shadow-[0_4px_16px_rgba(35,40,56,0.15)]"
               >
                 초대 코드 생성하기
               </button>
               <button
                 onClick={() => setStep("input_code")}
-                className="py-4 border-2 border-[#FF6347] text-[#FF6347] rounded-full hover:bg-[#FF6347]/5 transition-all font-medium"
+                className="py-4 border-2 border-[#1A1A2E] text-[#1A1A2E] rounded-full hover:bg-[#1A1A2E]/5 transition-all font-medium"
               >
                 상대방 코드 입력하기
               </button>
@@ -280,41 +315,41 @@ export default function FriendsPage() {
 
         {/* 코드 생성됨 */}
         {step === "code_shown" && (
-          <div className="bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6">
+          <div className="bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(35,40,56,0.102)] mb-6">
             <div className="text-center mb-8">
-              <p className="text-sm text-[#7A5C4D] mb-2">내 초대 코드가 생성되었습니다</p>
-              <div className="inline-flex items-center gap-3 bg-[#FFF8F4] border-2 border-[#FF6347] rounded-2xl px-8 py-4 mb-3">
-                <span className="text-3xl font-bold tracking-widest text-[#FF6347]">{MOCK_CODE}</span>
+              <p className="text-sm text-[#6F7787] mb-2">내 초대 코드가 생성되었습니다</p>
+              <div className="inline-flex items-center gap-3 bg-[#FAFAF7] border-2 border-[#1A1A2E] rounded-2xl px-8 py-4 mb-3">
+                <span className="text-3xl font-bold tracking-widest text-[#1A1A2E]">{myProfile?.friendCode || "(로딩 중...)"}</span>
                 <button
                   onClick={handleCopyCode}
-                  className="p-2 rounded-lg border border-[#FF6347] text-[#FF6347] hover:bg-[#FF6347]/5 transition-all"
+                  className="p-2 rounded-lg border border-[#1A1A2E] text-[#1A1A2E] hover:bg-[#1A1A2E]/5 transition-all"
                 >
                   {codeCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                 </button>
               </div>
-              <p className="text-sm text-[#7A5C4D]">이 코드를 상대방에게 전달해주세요.</p>
+              <p className="text-sm text-[#6F7787]">이 코드를 상대방에게 전달해주세요.</p>
               <button
                 onClick={() => setStep("code_shown")}
-                className="mt-2 flex items-center gap-1 text-xs text-[#7A5C4D] hover:text-[#FF6347] mx-auto"
+                className="mt-2 flex items-center gap-1 text-xs text-[#6F7787] hover:text-[#1A1A2E] mx-auto"
               >
                 <RefreshCw className="w-3 h-3" /> 코드 재생성
               </button>
             </div>
 
-            <div className="border-t border-[#F0DFD0] pt-6">
-              <p className="text-sm font-semibold text-[#1F1410] mb-1 text-center">시연용</p>
-              <p className="text-xs text-[#7A5C4D] mb-4 text-center">
+            <div className="border-t border-[#E5E2DC] pt-6">
+              <p className="text-sm font-semibold text-[#1A1A2E] mb-1 text-center">시연용</p>
+              <p className="text-xs text-[#6F7787] mb-4 text-center">
                 실제 서비스에서는 상대방이 직접 코드를 입력합니다.
               </p>
               {isConnecting ? (
                 <div className="flex items-center justify-center gap-2 py-3">
-                  <div className="w-4 h-4 rounded-full bg-[#FF6347] animate-ping" />
-                  <span className="text-sm text-[#7A5C4D]">{fallbackPartnerName}님 연결 중...</span>
+                  <div className="w-4 h-4 rounded-full bg-[#1A1A2E] animate-ping" />
+                  <span className="text-sm text-[#6F7787]">{fallbackPartnerName}님 연결 중...</span>
                 </div>
               ) : (
                 <button
                   onClick={handlePartnerConnect}
-                  className="w-full py-3 bg-[#FFE0CC] text-[#1F1410] rounded-full hover:bg-[#F0DFD0] transition-all font-medium border border-[#F0DFD0]"
+                  className="w-full py-3 bg-[#EFEDE7] text-[#1A1A2E] rounded-full hover:bg-[#E5E2DC] transition-all font-medium border border-[#E5E2DC]"
                 >
                   상대방 연결 시연하기
                 </button>
@@ -325,34 +360,34 @@ export default function FriendsPage() {
 
         {/* 상대방 코드 입력 */}
         {step === "input_code" && (
-          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(255,99,71,0.17)] mb-6">
-            <h3 className="text-lg font-semibold text-[#1F1410] mb-2">상대방 코드 입력</h3>
-            <p className="text-sm text-[#7A5C4D] mb-5">상대방이 생성한 초대 코드를 입력해주세요.</p>
+          <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(35,40,56,0.102)] mb-6">
+            <h3 className="text-lg font-semibold text-[#1A1A2E] mb-2">상대방 코드 입력</h3>
+            <p className="text-sm text-[#6F7787] mb-5">상대방이 생성한 초대 코드를 입력해주세요.</p>
             <div className="flex gap-3 mb-2">
               <input
                 type="text"
                 value={codeInput}
                 onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setInputError(""); }}
                 placeholder="예: COUPLE-4821"
-                className="flex-1 h-12 px-4 bg-[#FFF8F4] border-2 border-[#F0DFD0] rounded-xl focus:outline-none focus:border-[#FF6347] text-[#1F1410] tracking-wider font-mono text-lg"
+                className="flex-1 h-12 px-4 bg-[#FAFAF7] border-2 border-[#E5E2DC] rounded-xl focus:outline-none focus:border-[#1A1A2E] text-[#1A1A2E] tracking-wider font-mono text-lg"
               />
               <button
                 onClick={handleInputConnect}
                 disabled={isConnecting}
-                className="px-8 h-12 bg-[#FF6347] text-white rounded-full hover:bg-[#E84028] transition-all font-medium"
+                className="px-8 h-12 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all font-medium"
               >
                 {isConnecting ? "연결 중..." : "연결하기"}
               </button>
             </div>
             {inputError && <p className="text-sm text-[#DC3545]">{inputError}</p>}
-            <p className="text-xs text-[#7A5C4D] mt-2">시연용: 아무 코드나 입력하면 연결됩니다.</p>
+            <p className="text-xs text-[#6F7787] mt-2">시연용: 아무 코드나 입력하면 연결됩니다.</p>
           </div>
         )}
 
         {step !== "none" && (
           <button
             onClick={() => { setStep("none"); setCodeInput(""); setInputError(""); }}
-            className="text-sm text-[#7A5C4D] hover:text-[#FF6347] underline"
+            className="text-sm text-[#6F7787] hover:text-[#1A1A2E] underline"
           >
             ← 처음으로
           </button>

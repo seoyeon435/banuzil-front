@@ -56,18 +56,42 @@ export function getAttachmentSurveyErrorMessage(error: unknown): string {
   return "설문 제출 중 오류가 발생했습니다.";
 }
 
-// 한글 라벨 매핑
+// 한글 라벨 매핑 — BE가 enum을 짧은 이름 또는 긴 이름(언더스코어 포함)으로 보낼 수 있음
 export function getAttachmentLabel(type: AttachmentType): string {
   switch (type) {
     case "SECURE":
       return "안정형";
     case "ANXIOUS":
+    case "PREOCCUPIED":
       return "불안형";
     case "AVOIDANT":
+    case "DISMISSIVE_AVOIDANT":
+    case "DISMISSING_AVOIDANT":
       return "거부회피형";
     case "FEARFUL":
+    case "FEARFUL_AVOIDANT":
       return "공포회피형";
     default:
       return String(type);
+  }
+}
+
+// 애착 유형별 짧은 설명 — 큰 라벨 아래 한 줄짜리 보조 텍스트로 사용
+export function getAttachmentMeaning(type: AttachmentType): string {
+  switch (type) {
+    case "SECURE":
+      return "신뢰와 안정을 추구해요";
+    case "ANXIOUS":
+    case "PREOCCUPIED":
+      return "친밀함을 갈망해요";
+    case "AVOIDANT":
+    case "DISMISSIVE_AVOIDANT":
+    case "DISMISSING_AVOIDANT":
+      return "독립성을 중요하게 여겨요";
+    case "FEARFUL":
+    case "FEARFUL_AVOIDANT":
+      return "친밀함과 거리 사이에서 갈등해요";
+    default:
+      return "";
   }
 }

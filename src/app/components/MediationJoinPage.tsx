@@ -64,12 +64,12 @@ export default function MediationJoinPage() {
       <MediationProgressHeader currentStep="input" />
       <AuthDebugBadge />
 
-      <div className="min-h-[calc(100vh-80px)] bg-[#FFF8F4] flex items-center justify-center py-12 px-6">
-        <div className="w-full max-w-[560px] bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(255,99,71,0.17)]">
-          <h1 className="text-[30px] font-semibold text-[#1F1410] text-center mb-3">
+      <div className="min-h-[calc(100vh-80px)] bg-[#FAFAF7] flex items-center justify-center py-12 px-6">
+        <div className="w-full max-w-[560px] bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(35,40,56,0.102)]">
+          <h1 className="text-[30px] font-semibold text-[#1A1A2E] text-center mb-3">
             방 번호로 참여하기
           </h1>
-          <p className="text-center text-[#7A5C4D] mb-8">
+          <p className="text-center text-[#6F7787] mb-8">
             상대방에게 전달받은 중재 방 번호를 입력해주세요.
           </p>
 
@@ -82,15 +82,15 @@ export default function MediationJoinPage() {
                 setErrorMsg("");
               }}
               placeholder="예: 7"
-              className="flex-1 h-12 px-4 bg-[#FFF8F4] border border-[#F0DFD0] rounded-xl focus:outline-none focus:border-[#FF6347] text-[#1F1410]"
+              className="flex-1 h-12 px-4 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl focus:outline-none focus:border-[#1A1A2E] text-[#1A1A2E]"
             />
             <button
               onClick={handleJoinRoom}
               disabled={isJoining}
               className={`px-6 h-12 rounded-full transition-all font-medium ${
                 isJoining
-                  ? "bg-[#F0DFD0] text-[#7A5C4D] cursor-not-allowed"
-                  : "bg-[#FF6347] text-white hover:bg-[#E84028]"
+                  ? "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
+                  : "bg-[#1A1A2E] text-white hover:bg-[#0F0F1F]"
               }`}
             >
               {isJoining ? "참여 중..." : "방 참여하기"}
@@ -101,7 +101,7 @@ export default function MediationJoinPage() {
 
           <Link
             to="/mediation/start"
-            className="block text-center text-sm text-[#7A5C4D] hover:text-[#FF6347] underline mt-6"
+            className="block text-center text-sm text-[#6F7787] hover:text-[#1A1A2E] underline mt-6"
           >
             중재 시작 화면으로 돌아가기
           </Link>
