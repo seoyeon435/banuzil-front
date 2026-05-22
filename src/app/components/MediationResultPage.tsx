@@ -220,6 +220,27 @@ export default function MediationResultPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [phase, completedRounds.length, roundInfo.roundNumber]);
 
+  const applyNextRound = useCallback((next: RoundViewModel, myAnswer: string, partnerAnswer?: string, aiMessageOverride?: string | null) => {
+    setCompletedRounds((prev) => [
+      ...prev,
+      {
+        roundNumber: roundInfo.roundNumber,
+        title: roundInfo.title,
+        question: roundInfo.question,
+        myAnswer,
+        partnerAnswer: partnerAnswer || roundInfo.partnerAnswer || (demoMode ? DEMO_PARTNER_ANSWER : "상대방 답변을 기다리는 중입니다."),
+        aiMessage: aiMessageOverride || roundInfo.aiMessage || DEFAULT_AI_MESSAGE,
+      },
+    ]);
+    setRoundInfo(next);
+    setPhase("input");
+    setSavedMyInput("");
+    setMyInput("");
+    setErrorMsg("");
+    setMyAiMessage(null);
+    setLastCheckedAt(new Date().toLocaleTimeString());
+  }, [demoMode, roundInfo]);
+
   useEffect(() => {
     if (phase !== "waiting_partner" || demoMode || !canUseRealApi) return;
 
@@ -253,27 +274,6 @@ export default function MediationResultPage() {
     const intervalId = window.setInterval(poll, 3000);
     return () => window.clearInterval(intervalId);
   }, [phase, demoMode, canUseRealApi, myEmail, roundInfo.roundNumber, savedMyInput, sessionId, applyNextRound]);
-
-  const applyNextRound = useCallback((next: RoundViewModel, myAnswer: string, partnerAnswer?: string, aiMessageOverride?: string | null) => {
-    setCompletedRounds((prev) => [
-      ...prev,
-      {
-        roundNumber: roundInfo.roundNumber,
-        title: roundInfo.title,
-        question: roundInfo.question,
-        myAnswer,
-        partnerAnswer: partnerAnswer || roundInfo.partnerAnswer || (demoMode ? DEMO_PARTNER_ANSWER : "상대방 답변을 기다리는 중입니다."),
-        aiMessage: aiMessageOverride || roundInfo.aiMessage || DEFAULT_AI_MESSAGE,
-      },
-    ]);
-    setRoundInfo(next);
-    setPhase("input");
-    setSavedMyInput("");
-    setMyInput("");
-    setErrorMsg("");
-    setMyAiMessage(null);
-    setLastCheckedAt(new Date().toLocaleTimeString());
-  }, [demoMode, roundInfo]);
 
   const advanceInDemoMode = useCallback((content: string, response?: unknown) => {
     const responseRound = isRoundAdvanced(response)
