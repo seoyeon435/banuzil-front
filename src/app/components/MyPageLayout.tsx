@@ -3,6 +3,7 @@ import { User, BarChart3, FileText, Heart, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchCurrentUserProfile, getStoredCurrentUser, logout, type CurrentUser } from "../../api/userApi";
 import { fallbackNameFromEmail } from "../utils/displayUser";
+import BrandMark from "./ui/BrandMark";
 
 interface MyPageLayoutProps {
   children: React.ReactNode;
@@ -45,19 +46,19 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
   const mbtiLabel = currentUser.mbti?.trim() || "설정 필요";
 
   const navItems = [
-    { path: "/mypage/profile", icon: User, label: "프로필", emoji: "👤" },
-    { path: "/mypage/statistics", icon: BarChart3, label: "갈등 통계", emoji: "📊" },
-    { path: "/mypage/records", icon: FileText, label: "갈등 기록", emoji: "📄" },
-    { path: "/mypage/our-space", icon: Heart, label: "우리 공간", emoji: "💕" },
+    { path: "/mypage/profile", icon: User, label: "프로필" },
+    { path: "/mypage/statistics", icon: BarChart3, label: "갈등 통계" },
+    { path: "/mypage/records", icon: FileText, label: "갈등 기록" },
+    { path: "/mypage/our-space", icon: Heart, label: "우리 공간" },
   ];
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] flex flex-col lg:flex-row min-w-0 [word-break:keep-all] overflow-x-hidden">
       <aside className="w-full lg:w-[280px] bg-white border-b lg:border-b-0 lg:border-r border-[#E5E2DC] lg:fixed lg:h-screen flex flex-col z-10">
         <Link to="/" className="p-5 lg:p-6 border-b border-[#E5E2DC] hover:bg-[#FAFAF7] transition-colors">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🧵</span>
-            <span className="text-xl font-bold text-[#1A1A2E]">바느질</span>
+          <div className="flex items-center gap-2.5">
+            <BrandMark size={18} variant="dual" />
+            <span className="text-xl font-semibold tracking-tight text-[#1A1A2E]">바느질</span>
           </div>
         </Link>
 
@@ -84,6 +85,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
         <nav className="flex lg:flex-1 overflow-x-auto lg:overflow-x-visible lg:block py-3 lg:py-6 px-3 lg:px-0">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const Icon = item.icon;
             return (
               <Link
                 key={item.path}
@@ -94,7 +96,7 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
                     : "text-[#6F7787] hover:bg-[#EFEDE7] hover:text-[#1A1A2E]"
                 }`}
               >
-                <span className="text-xl">{item.emoji}</span>
+                <Icon className="w-[18px] h-[18px]" strokeWidth={1.6} />
                 <span className="font-medium text-sm lg:text-base">{item.label}</span>
               </Link>
             );
