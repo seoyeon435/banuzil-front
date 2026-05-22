@@ -7,7 +7,6 @@ import {
   getSewingSessionList,
   isRealSewingSessionId,
   submitSewingRound,
-  type SewingRoundInfo,
   type SewingSession,
 } from "../../api/sewingApi";
 import AuthDebugBadge from "./AuthDebugBadge";
@@ -29,72 +28,19 @@ function readBooleanField(session: SewingSession | undefined, keys: string[]): b
   return keys.some((key) => session[key] === true || session[key] === "true" || session[key] === "Y");
 }
 
-function readBooleanValue(data: Record<string, unknown>, keys: string[]): boolean {
-  return keys.some((key) => {
-    const value = data[key];
-    return value === true || value === "true" || value === "Y";
-  });
-}
 
-function hasStringValue(data: Record<string, unknown>, keys: string[]): boolean {
-  return keys.some((key) => typeof data[key] === "string" && data[key].trim().length > 0);
-}
-
-function readNumberValue(data: Record<string, unknown>, keys: string[]): number {
-  for (const key of keys) {
-    const value = data[key];
-    if (typeof value === "number" && Number.isFinite(value)) return value;
-    if (typeof value === "string" && value.trim().length > 0) {
-      const parsed = Number(value);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-  }
-  return 0;
-}
-
-function unwrapRoundPayload(data: SewingRoundInfo | undefined): Record<string, unknown> {
-  if (!data || typeof data !== "object") return {};
-  const root = data as Record<string, unknown>;
-  const nested = root.nextRound ?? root.currentRoundInfo ?? root.round;
-  if (nested && typeof nested === "object") return nested as Record<string, unknown>;
-  return root;
-}
-
-function getRoundSaveState(session: SewingSession | undefined, localSaved: boolean) {
+function getRoundSaveState(session: SewingSession | undefined, localSaved: boolean, submittedRound: number) {
   const status = typeof session?.status === "string" ? session.status.toUpperCase() : "";
-  const currentRound = typeof session?.currentRound === "number" ? session.currentRound : 0;
+  const backendRound = typeof session?.currentRound === "number" ? session.currentRound : 0;
   const explicitMine = readBooleanField(session, ["mySubmitted", "myInputDone", "initiatorSubmitted", "creatorSubmitted", "meSubmitted"]);
   const explicitPartner = readBooleanField(session, ["partnerSubmitted", "partnerInputDone", "participantSubmitted", "opponentSubmitted"]);
   const bothByStatus = ["BOTH_SUBMITTED", "READY_FOR_ANALYSIS", "ANALYZING", "COMPLETED", "DONE"].includes(status);
-  const bothByRound = currentRound > 1;
+  const bothByRound = backendRound > submittedRound;
 
   return {
-    mySaved: localSaved || explicitMine || currentRound >= 1 || bothByStatus || bothByRound,
+    mySaved: localSaved || explicitMine || backendRound >= submittedRound || bothByStatus || bothByRound,
     partnerSaved: explicitPartner || bothByStatus || bothByRound,
-    bothSaved: (localSaved || explicitMine || currentRound >= 1 || bothByStatus || bothByRound) && (explicitPartner || bothByStatus || bothByRound),
-  };
-}
-
-function getRoundDetailSaveState(round: SewingRoundInfo | undefined, localSaved: boolean) {
-  const payload = unwrapRoundPayload(round);
-  const status = typeof payload.status === "string" ? payload.status.toUpperCase() : "";
-  const currentRound = readNumberValue(payload, ["currentRound", "roundNumber", "round"]);
-  const explicitMine = readBooleanValue(payload, ["mySubmitted", "myInputDone", "initiatorSubmitted", "creatorSubmitted", "meSubmitted"]);
-  const explicitPartner = readBooleanValue(payload, ["partnerSubmitted", "partnerInputDone", "participantSubmitted", "opponentSubmitted"]);
-  const myAnswerExists = hasStringValue(payload, ["myAnswer", "answer", "content", "initiatorAnswer", "creatorAnswer"]);
-  const partnerAnswerExists = hasStringValue(payload, ["partnerAnswer", "opponentAnswer", "participantAnswer", "otherAnswer"]);
-  const bothByStatus =
-    status.includes("BOTH") ||
-    status.includes("READY") ||
-    status.includes("ANALYZ") ||
-    status.includes("COMPLETE") ||
-    status.includes("DONE");
-  const bothByRound = currentRound > 1;
-
-  return {
-    mySaved: localSaved || explicitMine || myAnswerExists || bothByStatus || bothByRound,
-    partnerSaved: explicitPartner || partnerAnswerExists || bothByStatus || bothByRound,
-    bothSaved: (localSaved || explicitMine || myAnswerExists || bothByStatus || bothByRound) && (explicitPartner || partnerAnswerExists || bothByStatus || bothByRound),
+    bothSaved: (localSaved || explicitMine || backendRound >= submittedRound || bothByStatus || bothByRound) && (explicitPartner || bothByStatus || bothByRound),
   };
 }
 
@@ -107,11 +53,20 @@ export default function MediationInputPage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [phase, setPhase] = useState<InputPhase>("writing");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentRound, setCurrentRound] = useState(1);
   const [isRoundSaved, setIsRoundSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
   const submitInFlightRef = useRef(false);
   const hasNavigatedRef = useRef(false);
+
+  useEffect(() => {
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    if (!isRealSewingSessionId(sessionId)) return;
+    getCurrentSewingRound(Number(sessionId))
+      .then((round) => { if (round > 0) setCurrentRound(round); })
+      .catch(() => {});
+  }, []);
 
   const toggleType = (type: string) => {
     setSelectedTypes((prev) =>
@@ -129,14 +84,19 @@ export default function MediationInputPage() {
       console.log("[Sewing] session-list polling 응답", sessions);
       const currentSession = findCurrentSession(sessions, sessionId);
       console.log("[Sewing] 현재 세션 상태", currentSession);
-      const listState = getRoundSaveState(currentSession, localSaved);
+      const listState = getRoundSaveState(currentSession, localSaved, currentRound);
       let detailState = null;
 
       if (isRealSewingSessionId(sessionId)) {
         try {
-          const round = await getCurrentSewingRound(Number(sessionId));
-          console.log("[Sewing] current-round polling 응답", round);
-          detailState = getRoundDetailSaveState(round, localSaved);
+          const backendRound = await getCurrentSewingRound(Number(sessionId));
+          console.log("[Sewing] current-round polling 응답", backendRound);
+          const bothDone = backendRound > currentRound;
+          detailState = {
+            mySaved: localSaved || bothDone,
+            partnerSaved: bothDone,
+            bothSaved: (localSaved || bothDone) && bothDone,
+          };
         } catch (roundError) {
           console.warn("[Sewing] current-round polling 실패, session-list 결과만 사용합니다.", roundError);
         }
@@ -162,7 +122,7 @@ export default function MediationInputPage() {
       console.error("[API] 입장 저장 완료 여부 확인 실패:", error);
       return null;
     }
-  }, [isRoundSaved, navigate]);
+  }, [isRoundSaved, navigate, currentRound]);
 
   useEffect(() => {
     if (phase !== "waiting_partner" || !isRoundSaved) return;
@@ -197,8 +157,8 @@ export default function MediationInputPage() {
       throw new Error("상대방 참여 후 입장을 저장할 수 있습니다.");
     }
 
-    console.log("[Sewing] round 저장 조건 충족", { sessionId, isJoined });
-    await submitSewingRound(Number(sessionId), 1, content);
+    console.log("[Sewing] round 저장 조건 충족", { sessionId, isJoined, round: currentRound });
+    await submitSewingRound(Number(sessionId), currentRound, content);
     setIsRoundSaved(true);
   };
 

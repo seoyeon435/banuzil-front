@@ -89,6 +89,27 @@ function unwrapRoundPayload(data: unknown): Record<string, unknown> {
 }
 
 function normalizeRoundInfo(data: unknown, fallbackRoundNumber = 1): RoundViewModel {
+  // GET /current-round 응답은 bare integer (백엔드가 Integer 그대로 반환)
+  if (typeof data === "number" && Number.isFinite(data) && data > 0) {
+    const roundNumber = data;
+    const fallback = ROUND_FALLBACKS[roundNumber] ?? {
+      title: `${roundNumber}라운드`,
+      question: "이번 라운드에서 더 나누고 싶은 이야기를 적어주세요.",
+      guide: "백엔드에서 내려준 라운드 번호를 기준으로 계속 이어집니다.",
+      aiMessage: DEFAULT_AI_MESSAGE,
+    };
+    return {
+      roundNumber,
+      title: fallback.title,
+      question: fallback.question,
+      guide: fallback.guide,
+      aiMessage: fallback.aiMessage,
+      myAnswer: "",
+      partnerAnswer: "",
+      status: "",
+    };
+  }
+
   const payload = unwrapRoundPayload(data);
   const roundNumber =
     toNumber(payload.currentRound) ??
