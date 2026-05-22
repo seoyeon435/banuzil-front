@@ -1,7 +1,15 @@
 import { Link, useNavigate } from "react-router";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getSewingErrorMessage, getSewingSessionList, isRealSewingSessionId, submitSewingRound, type SewingSession } from "../../api/sewingApi";
+import {
+  getCurrentSewingRound,
+  getSewingErrorMessage,
+  getSewingSessionList,
+  isRealSewingSessionId,
+  submitSewingRound,
+  type SewingRoundInfo,
+  type SewingSession,
+} from "../../api/sewingApi";
 import AuthDebugBadge from "./AuthDebugBadge";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
@@ -21,6 +29,37 @@ function readBooleanField(session: SewingSession | undefined, keys: string[]): b
   return keys.some((key) => session[key] === true || session[key] === "true" || session[key] === "Y");
 }
 
+function readBooleanValue(data: Record<string, unknown>, keys: string[]): boolean {
+  return keys.some((key) => {
+    const value = data[key];
+    return value === true || value === "true" || value === "Y";
+  });
+}
+
+function hasStringValue(data: Record<string, unknown>, keys: string[]): boolean {
+  return keys.some((key) => typeof data[key] === "string" && data[key].trim().length > 0);
+}
+
+function readNumberValue(data: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim().length > 0) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+}
+
+function unwrapRoundPayload(data: SewingRoundInfo | undefined): Record<string, unknown> {
+  if (!data || typeof data !== "object") return {};
+  const root = data as Record<string, unknown>;
+  const nested = root.nextRound ?? root.currentRoundInfo ?? root.round;
+  if (nested && typeof nested === "object") return nested as Record<string, unknown>;
+  return root;
+}
+
 function getRoundSaveState(session: SewingSession | undefined, localSaved: boolean) {
   const status = typeof session?.status === "string" ? session.status.toUpperCase() : "";
   const currentRound = typeof session?.currentRound === "number" ? session.currentRound : 0;
@@ -33,6 +72,29 @@ function getRoundSaveState(session: SewingSession | undefined, localSaved: boole
     mySaved: localSaved || explicitMine || currentRound >= 1 || bothByStatus || bothByRound,
     partnerSaved: explicitPartner || bothByStatus || bothByRound,
     bothSaved: (localSaved || explicitMine || currentRound >= 1 || bothByStatus || bothByRound) && (explicitPartner || bothByStatus || bothByRound),
+  };
+}
+
+function getRoundDetailSaveState(round: SewingRoundInfo | undefined, localSaved: boolean) {
+  const payload = unwrapRoundPayload(round);
+  const status = typeof payload.status === "string" ? payload.status.toUpperCase() : "";
+  const currentRound = readNumberValue(payload, ["currentRound", "roundNumber", "round"]);
+  const explicitMine = readBooleanValue(payload, ["mySubmitted", "myInputDone", "initiatorSubmitted", "creatorSubmitted", "meSubmitted"]);
+  const explicitPartner = readBooleanValue(payload, ["partnerSubmitted", "partnerInputDone", "participantSubmitted", "opponentSubmitted"]);
+  const myAnswerExists = hasStringValue(payload, ["myAnswer", "answer", "content", "initiatorAnswer", "creatorAnswer"]);
+  const partnerAnswerExists = hasStringValue(payload, ["partnerAnswer", "opponentAnswer", "participantAnswer", "otherAnswer"]);
+  const bothByStatus =
+    status.includes("BOTH") ||
+    status.includes("READY") ||
+    status.includes("ANALYZ") ||
+    status.includes("COMPLETE") ||
+    status.includes("DONE");
+  const bothByRound = currentRound > 1;
+
+  return {
+    mySaved: localSaved || explicitMine || myAnswerExists || bothByStatus || bothByRound,
+    partnerSaved: explicitPartner || partnerAnswerExists || bothByStatus || bothByRound,
+    bothSaved: (localSaved || explicitMine || myAnswerExists || bothByStatus || bothByRound) && (explicitPartner || partnerAnswerExists || bothByStatus || bothByRound),
   };
 }
 
@@ -67,7 +129,24 @@ export default function MediationInputPage() {
       console.log("[Sewing] session-list polling 응답", sessions);
       const currentSession = findCurrentSession(sessions, sessionId);
       console.log("[Sewing] 현재 세션 상태", currentSession);
-      const state = getRoundSaveState(currentSession, localSaved);
+      const listState = getRoundSaveState(currentSession, localSaved);
+      let detailState = null;
+
+      if (isRealSewingSessionId(sessionId)) {
+        try {
+          const round = await getCurrentSewingRound(Number(sessionId));
+          console.log("[Sewing] current-round polling 응답", round);
+          detailState = getRoundDetailSaveState(round, localSaved);
+        } catch (roundError) {
+          console.warn("[Sewing] current-round polling 실패, session-list 결과만 사용합니다.", roundError);
+        }
+      }
+
+      const state = {
+        mySaved: listState.mySaved || detailState?.mySaved === true,
+        partnerSaved: listState.partnerSaved || detailState?.partnerSaved === true,
+        bothSaved: listState.bothSaved || detailState?.bothSaved === true,
+      };
       console.log("[Sewing] 내 입장 저장 여부", state.mySaved);
       console.log("[Sewing] 상대방 입장 저장 여부", state.partnerSaved);
       console.log("[Sewing] AI 분석 화면 이동 조건 충족 여부", state.bothSaved);
