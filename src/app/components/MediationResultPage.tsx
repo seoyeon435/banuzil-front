@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   getCurrentSewingRound,
+  getSessionRecords,
   getSewingErrorMessage,
   getSewingSessionList,
   isRealSewingSessionId,
@@ -9,6 +10,7 @@ import {
   type SewingRoundInfo,
   type SewingSession,
 } from "../../api/sewingApi";
+import { getStoredCurrentUser } from "../../api/userApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
 type RoundPhase = "input" | "waiting_partner";
@@ -173,6 +175,7 @@ export default function MediationResultPage() {
   const [completedRounds, setCompletedRounds] = useState<CompletedRound[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [myAiMessage, setMyAiMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -180,6 +183,7 @@ export default function MediationResultPage() {
 
   const sessionId = sessionStorage.getItem("sewingSessionId");
   const canUseRealApi = isRealSewingSessionId(sessionId);
+  const myEmail = getStoredCurrentUser().email;
   const temperature = Math.max(35, 78 - Math.max(0, roundInfo.roundNumber - 2) * 8);
 
   const loadCurrentRound = useCallback(async () => {
@@ -216,23 +220,7 @@ export default function MediationResultPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [phase, completedRounds.length, roundInfo.roundNumber]);
 
-  useEffect(() => {
-    if (phase !== "waiting_partner" || demoMode) return;
-
-    const intervalId = window.setInterval(async () => {
-      const previousRound = roundInfo.roundNumber;
-      const latest = await loadCurrentRound();
-      if (latest.roundNumber > previousRound) {
-        setPhase("input");
-        setSavedMyInput("");
-        setMyInput("");
-      }
-    }, 3000);
-
-    return () => window.clearInterval(intervalId);
-  }, [demoMode, loadCurrentRound, phase, roundInfo.roundNumber]);
-
-  const applyNextRound = useCallback((next: RoundViewModel, myAnswer: string, partnerAnswer?: string) => {
+  const applyNextRound = useCallback((next: RoundViewModel, myAnswer: string, partnerAnswer?: string, aiMessageOverride?: string | null) => {
     setCompletedRounds((prev) => [
       ...prev,
       {
@@ -241,7 +229,7 @@ export default function MediationResultPage() {
         question: roundInfo.question,
         myAnswer,
         partnerAnswer: partnerAnswer || roundInfo.partnerAnswer || (demoMode ? DEMO_PARTNER_ANSWER : "상대방 답변을 기다리는 중입니다."),
-        aiMessage: roundInfo.aiMessage || DEFAULT_AI_MESSAGE,
+        aiMessage: aiMessageOverride || roundInfo.aiMessage || DEFAULT_AI_MESSAGE,
       },
     ]);
     setRoundInfo(next);
@@ -249,8 +237,43 @@ export default function MediationResultPage() {
     setSavedMyInput("");
     setMyInput("");
     setErrorMsg("");
+    setMyAiMessage(null);
     setLastCheckedAt(new Date().toLocaleTimeString());
   }, [demoMode, roundInfo]);
+
+  useEffect(() => {
+    if (phase !== "waiting_partner" || demoMode || !canUseRealApi) return;
+
+    const poll = async () => {
+      try {
+        const [records, backendRound] = await Promise.all([
+          getSessionRecords(Number(sessionId)),
+          getCurrentSewingRound(Number(sessionId)),
+        ]);
+
+        const myRecord = records.find(
+          (r) => r.email === myEmail && r.roundNumber === roundInfo.roundNumber
+        );
+
+        if (myRecord?.aiResponse) {
+          setMyAiMessage(myRecord.aiResponse);
+        }
+
+        setLastCheckedAt(new Date().toLocaleTimeString());
+
+        if (backendRound > roundInfo.roundNumber) {
+          const next = normalizeRoundInfo(backendRound);
+          applyNextRound(next, savedMyInput, undefined, myRecord?.aiResponse ?? null);
+        }
+      } catch {
+        // 폴링 실패는 무시
+      }
+    };
+
+    void poll();
+    const intervalId = window.setInterval(poll, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [phase, demoMode, canUseRealApi, myEmail, roundInfo.roundNumber, savedMyInput, sessionId, applyNextRound]);
 
   const advanceInDemoMode = useCallback((content: string, response?: unknown) => {
     const responseRound = isRoundAdvanced(response)
@@ -289,20 +312,7 @@ export default function MediationResultPage() {
 
       setSavedMyInput(content);
       setMyInput("");
-      if (isRoundAdvanced(response)) {
-        const next = normalizeRoundInfo(response, roundInfo.roundNumber + 1);
-        if (next.roundNumber > roundInfo.roundNumber) {
-          applyNextRound(next, content, next.partnerAnswer);
-          return;
-        }
-      }
-
-      const latest = await loadCurrentRound();
-      if (latest.roundNumber > roundInfo.roundNumber) {
-        applyNextRound(latest, content, latest.partnerAnswer);
-      } else {
-        setPhase("waiting_partner");
-      }
+      setPhase("waiting_partner");
     } catch (error) {
       console.error("[API] 라운드 답변 저장 실패:", error);
       if (demoMode) {
@@ -504,7 +514,7 @@ export default function MediationResultPage() {
                 </div>
               )}
 
-              <AiMessage message={roundInfo.aiMessage} />
+              <AiMessage message={myAiMessage || roundInfo.aiMessage} />
 
               <button
                 onClick={handleComplete}
