@@ -153,14 +153,14 @@ export async function submitSewingRound(
 
 // ── 현재 라운드 조회 ────────────────────────────────
 // 우선 전용 API를 사용하고, 백엔드가 아직 미구현이면 호출부에서 session-list로 fallback합니다.
-export async function getCurrentSewingRound(sessionId: number): Promise<SewingRoundInfo> {
+export async function getCurrentSewingRound(sessionId: number): Promise<number> {
   logAccessTokenPresence();
   const url = `/api/sewings/${sessionId}/current-round`;
   console.log("[Sewing] 현재 라운드 조회 요청 URL", url);
 
   const response = await apiClient.get(url);
   console.log("[Sewing] 현재 라운드 조회 응답", response.data);
-  return response.data as SewingRoundInfo;
+  return (response.data as number) ?? 1;
 }
 
 // ── 3. 세션 참여 ────────────────────────────
