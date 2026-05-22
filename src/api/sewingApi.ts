@@ -192,3 +192,24 @@ export async function getSewingSessionList(): Promise<SewingSession[]> {
   console.log("[Sewing] session-list 응답", response.data);
   return response.data as SewingSession[];
 }
+
+// ── 5. 세션 라운드 기록 조회 ────────────────────────
+// GET /api/sewings/{sessionId}/records
+export interface SessionRecord {
+  recordId: number;
+  sessionId: number;
+  email: string;
+  nickname: string;
+  gender: string;
+  roundNumber: number;
+  content: string;
+  aiResponse: string | null;
+}
+
+export async function getSessionRecords(sessionId: number): Promise<SessionRecord[]> {
+  const url = `/api/sewings/${sessionId}/records`;
+  console.log("[Sewing] records 조회 요청 URL", url);
+  const response = await apiClient.get(url);
+  console.log("[Sewing] records 조회 응답", response.data);
+  return response.data as SessionRecord[];
+}
