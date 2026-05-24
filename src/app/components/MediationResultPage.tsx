@@ -7,6 +7,7 @@ import {
   getSewingSessionList,
   isRealSewingSessionId,
   submitSewingRound,
+  type SessionRecord,
   type SewingRoundInfo,
   type SewingSession,
 } from "../../api/sewingApi";
@@ -152,6 +153,20 @@ function isRoundAdvanced(response: unknown): boolean {
   return Boolean(payload.nextRound || payload.currentRoundInfo || payload.round || payload.currentRound || payload.roundNumber);
 }
 
+function findAiResponseForRound(records: SessionRecord[], roundNumber: number, email?: string): string | null {
+  const sameRoundRecords = records.filter((record) => record.roundNumber === roundNumber && record.aiResponse);
+  const myRecord = sameRoundRecords.find((record) => email && record.email === email);
+  return myRecord?.aiResponse ?? sameRoundRecords[0]?.aiResponse ?? null;
+}
+
+function findLatestPreviousAiResponse(records: SessionRecord[], currentRound: number, email?: string): string | null {
+  const previousRecords = records
+    .filter((record) => record.roundNumber < currentRound && record.aiResponse)
+    .sort((a, b) => b.roundNumber - a.roundNumber);
+  const myRecord = previousRecords.find((record) => email && record.email === email);
+  return myRecord?.aiResponse ?? previousRecords[0]?.aiResponse ?? null;
+}
+
 function useDemoMode(): boolean {
   const [searchParams] = useSearchParams();
   return useMemo(() => {
@@ -185,6 +200,7 @@ export default function MediationResultPage() {
   const canUseRealApi = isRealSewingSessionId(sessionId);
   const myEmail = getStoredCurrentUser().email;
   const temperature = Math.max(35, 78 - Math.max(0, roundInfo.roundNumber - 2) * 8);
+  const currentAiMessage = myAiMessage ?? (isLoading ? "AI 중재 메시지를 불러오는 중입니다." : "아직 표시할 AI 중재 메시지가 없습니다.");
 
   const loadCurrentRound = useCallback(async () => {
     if (!canUseRealApi) {
@@ -198,6 +214,13 @@ export default function MediationResultPage() {
       const current = await getCurrentSewingRound(Number(sessionId));
       const normalized = normalizeRoundInfo(current);
       setRoundInfo(normalized);
+      try {
+        const records = await getSessionRecords(Number(sessionId));
+        setMyAiMessage(findLatestPreviousAiResponse(records, normalized.roundNumber, myEmail));
+      } catch (recordsError) {
+        console.warn("[Sewing] records 조회 실패, AI 중재 메시지를 비워둡니다.", recordsError);
+        setMyAiMessage(null);
+      }
       return normalized;
     } catch (error) {
       console.warn("[Sewing] current-round 조회 실패, session-list로 fallback합니다.", error);
@@ -205,12 +228,18 @@ export default function MediationResultPage() {
       const session = sessions.find((item) => Number(item.sessionId) === Number(sessionId));
       const normalized = normalizeRoundInfo(sessionToRoundInfo(session));
       setRoundInfo(normalized);
+      try {
+        const records = await getSessionRecords(Number(sessionId));
+        setMyAiMessage(findLatestPreviousAiResponse(records, normalized.roundNumber, myEmail));
+      } catch {
+        setMyAiMessage(null);
+      }
       return normalized;
     } finally {
       setIsLoading(false);
       setLastCheckedAt(new Date().toLocaleTimeString());
     }
-  }, [canUseRealApi, sessionId]);
+  }, [canUseRealApi, myEmail, sessionId]);
 
   useEffect(() => {
     void loadCurrentRound();
@@ -237,7 +266,7 @@ export default function MediationResultPage() {
     setSavedMyInput("");
     setMyInput("");
     setErrorMsg("");
-    setMyAiMessage(null);
+    setMyAiMessage(aiMessageOverride ?? null);
     setLastCheckedAt(new Date().toLocaleTimeString());
   }, [demoMode, roundInfo]);
 
@@ -251,19 +280,17 @@ export default function MediationResultPage() {
           getCurrentSewingRound(Number(sessionId)),
         ]);
 
-        const myRecord = records.find(
-          (r) => r.email === myEmail && r.roundNumber === roundInfo.roundNumber
-        );
+        const currentRoundAiResponse = findAiResponseForRound(records, roundInfo.roundNumber, myEmail);
 
-        if (myRecord?.aiResponse) {
-          setMyAiMessage(myRecord.aiResponse);
+        if (currentRoundAiResponse) {
+          setMyAiMessage(currentRoundAiResponse);
         }
 
         setLastCheckedAt(new Date().toLocaleTimeString());
 
         if (backendRound > roundInfo.roundNumber) {
           const next = normalizeRoundInfo(backendRound);
-          applyNextRound(next, savedMyInput, undefined, myRecord?.aiResponse ?? null);
+          applyNextRound(next, savedMyInput, undefined, currentRoundAiResponse);
         }
       } catch {
         // 폴링 실패는 무시
@@ -461,10 +488,9 @@ export default function MediationResultPage() {
                 <div className="w-8 h-8 rounded-full bg-[#1A1A2E]/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-base">AI</span>
                 </div>
-                <div className="flex-1 min-w-0 bg-[#1A1A2E]/5 rounded-xl p-4">
-                  <p className="text-xs text-[#6F7787] mb-1">질문</p>
-                  <p className="text-sm font-medium text-[#1A1A2E]">{roundInfo.question}</p>
-                  <p className="text-xs text-[#6F7787] mt-2">{roundInfo.guide}</p>
+                <div className="flex-1 min-w-0 bg-[#EBE9F2] border-l-4 border-[#6F8197] rounded-xl p-4">
+                  <p className="text-xs text-[#6F7787] mb-1">AI 중재 메시지</p>
+                  <p className="text-sm text-[#1A1A2E] leading-relaxed whitespace-pre-wrap">{currentAiMessage}</p>
                 </div>
               </div>
 
@@ -479,7 +505,7 @@ export default function MediationResultPage() {
                   <textarea
                     value={myInput}
                     onChange={(event) => setMyInput(event.target.value)}
-                    placeholder="지금 이 라운드의 질문에 답해주세요."
+                    placeholder="AI 중재 메시지를 읽고 지금 드는 생각을 적어주세요."
                     className="w-full h-[120px] p-4 bg-[#FAFAF7] border-2 border-[#E5E2DC] rounded-xl focus:outline-none focus:border-[#1A1A2E] resize-none text-[#1A1A2E] text-sm"
                   />
                   <button
@@ -491,7 +517,7 @@ export default function MediationResultPage() {
                         : "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
                     }`}
                   >
-                    {isSubmitting ? "저장 중..." : "답변 제출하기"}
+                    {isSubmitting ? "저장 중..." : "내 답변 저장"}
                   </button>
                   {errorMsg && <p className="text-sm text-[#DC3545] mt-3">{errorMsg}</p>}
                 </div>
@@ -513,8 +539,6 @@ export default function MediationResultPage() {
                   </div>
                 </div>
               )}
-
-              <AiMessage message={myAiMessage || roundInfo.aiMessage} />
 
               <button
                 onClick={handleComplete}

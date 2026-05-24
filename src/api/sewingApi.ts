@@ -34,6 +34,38 @@ export interface SewingRoundInfo {
   [key: string]: unknown;
 }
 
+export interface CycleExploreResponse {
+  session_id: number;
+  fquestion: string;
+  mquestion: string;
+}
+
+export interface CycleDefineRequest {
+  fexploreAnswer: string;
+  mexploreAnswer: string;
+  session_id: number;
+  f_explore_answer: string;
+  m_explore_answer: string;
+}
+
+export interface CycleDefineResponse {
+  session_id: number;
+  cycle_definition: string;
+}
+
+export interface ReportContent {
+  emotion_summary: string;
+  partner_understanding: string;
+  mediation_plans: string;
+  recommended_dialogues: string;
+}
+
+export interface ReportResponse {
+  session_id: number;
+  f_report: ReportContent;
+  m_report: ReportContent;
+}
+
 // ── sessionId 파싱 헬퍼 ────────────────────────────
 // POST /api/sewings 응답이 string | number | { sessionId: number } 등 불확실하므로 유연하게 처리
 function parseSessionId(data: unknown): number | null {
@@ -149,6 +181,48 @@ export async function submitSewingRound(
     logSewingFailure("round 저장", error);
     throw error;
   }
+}
+
+export async function getCycleExploreQuestions(sessionId: number): Promise<CycleExploreResponse> {
+  const response = await apiClient.post<CycleExploreResponse>(
+    `/api/sewings/${sessionId}/cycle/explore`
+  );
+  return response.data;
+}
+
+export async function defineCycle(
+  sessionId: number,
+  fExploreAnswer: string,
+  mExploreAnswer: string
+): Promise<CycleDefineResponse> {
+  const body: CycleDefineRequest = {
+    fexploreAnswer: fExploreAnswer,
+    mexploreAnswer: mExploreAnswer,
+    session_id: sessionId,
+    f_explore_answer: fExploreAnswer,
+    m_explore_answer: mExploreAnswer,
+  };
+
+  const response = await apiClient.post<CycleDefineResponse>(
+    `/api/sewings/${sessionId}/cycle/define`,
+    body
+  );
+
+  return response.data;
+}
+
+export async function createReport(sessionId: number): Promise<ReportResponse> {
+  const body = {
+    session_id: sessionId,
+    sessionId,
+  };
+
+  const response = await apiClient.post<ReportResponse>(
+    `/api/sewings/${sessionId}/report`,
+    body
+  );
+
+  return response.data;
 }
 
 // ── 현재 라운드 조회 ────────────────────────────────

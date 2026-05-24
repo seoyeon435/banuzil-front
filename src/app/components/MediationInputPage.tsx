@@ -2,11 +2,15 @@ import { Link, useNavigate } from "react-router";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  defineCycle,
+  getCycleExploreQuestions,
   getCurrentSewingRound,
   getSewingErrorMessage,
   getSewingSessionList,
   isRealSewingSessionId,
   submitSewingRound,
+  type CycleExploreResponse,
+  type CycleDefineResponse,
   type SewingSession,
 } from "../../api/sewingApi";
 import AuthDebugBadge from "./AuthDebugBadge";
@@ -57,6 +61,12 @@ export default function MediationInputPage() {
   const [isRoundSaved, setIsRoundSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
+  const [cycleTestQuestions, setCycleTestQuestions] = useState<CycleExploreResponse | null>(null);
+  const [cycleTestDefinition, setCycleTestDefinition] = useState<CycleDefineResponse | null>(null);
+  const [cycleTestFAnswer, setCycleTestFAnswer] = useState("");
+  const [cycleTestMAnswer, setCycleTestMAnswer] = useState("");
+  const [cycleTestLoading, setCycleTestLoading] = useState(false);
+  const [cycleTestError, setCycleTestError] = useState("");
   const submitInFlightRef = useRef(false);
   const hasNavigatedRef = useRef(false);
 
@@ -208,6 +218,51 @@ export default function MediationInputPage() {
 
   const handleStartAnalysis = () => {
     navigate("/mediation/analyzing");
+  };
+
+  const getCycleTestSessionId = () => {
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    if (!isRealSewingSessionId(sessionId)) {
+      throw new Error("테스트할 중재 방 정보가 없습니다.");
+    }
+    return Number(sessionId);
+  };
+
+  const handleCycleExploreTest = async () => {
+    setCycleTestLoading(true);
+    setCycleTestError("");
+    setCycleTestDefinition(null);
+
+    try {
+      const questions = await getCycleExploreQuestions(getCycleTestSessionId());
+      console.log("[Cycle test] explore response", questions);
+      setCycleTestQuestions(questions);
+    } catch (error) {
+      console.error("[Cycle test] explore failed", error);
+      setCycleTestError(error instanceof Error ? error.message : "사이클 탐색 질문 호출에 실패했어요.");
+    } finally {
+      setCycleTestLoading(false);
+    }
+  };
+
+  const handleCycleDefineTest = async () => {
+    setCycleTestLoading(true);
+    setCycleTestError("");
+
+    try {
+      const definition = await defineCycle(
+        getCycleTestSessionId(),
+        cycleTestFAnswer.trim(),
+        cycleTestMAnswer.trim()
+      );
+      console.log("[Cycle test] define response", definition);
+      setCycleTestDefinition(definition);
+    } catch (error) {
+      console.error("[Cycle test] define failed", error);
+      setCycleTestError(error instanceof Error ? error.message : "사이클 정의 호출에 실패했어요.");
+    } finally {
+      setCycleTestLoading(false);
+    }
   };
 
   // ── 상대방 대기 / 로드 완료 화면 ──────────────────────────────
@@ -400,6 +455,65 @@ export default function MediationInputPage() {
             </div>
           )}
         </div>
+
+        {/* TODO: remove after cycle API integration test */}
+        <details className="mt-4 bg-white rounded-2xl shadow-[0_4px_16px_rgba(35,40,56,0.078)] p-5">
+          <summary className="cursor-pointer text-sm font-semibold text-[#1A1A2E]">
+            개발용 사이클 API 테스트
+          </summary>
+          <div className="mt-4 space-y-3">
+            <button
+              onClick={handleCycleExploreTest}
+              disabled={cycleTestLoading}
+              className="w-full py-2.5 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all disabled:bg-[#E5E2DC] disabled:text-[#6F7787]"
+            >
+              {cycleTestLoading ? "호출 중..." : "탐색 질문 호출"}
+            </button>
+
+            {cycleTestQuestions && (
+              <div className="space-y-3 text-xs text-[#1A1A2E]">
+                <div className="rounded-xl bg-[#FAFAF7] border border-[#E5E2DC] p-3">
+                  <p className="font-semibold mb-1">A 질문</p>
+                  <p className="text-[#6F7787] leading-relaxed">{cycleTestQuestions.fquestion}</p>
+                </div>
+                <textarea
+                  value={cycleTestFAnswer}
+                  onChange={(event) => setCycleTestFAnswer(event.target.value)}
+                  placeholder="A 답변"
+                  className="w-full min-h-[72px] p-3 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl resize-none focus:outline-none focus:border-[#1A1A2E]"
+                />
+                <div className="rounded-xl bg-[#FAFAF7] border border-[#E5E2DC] p-3">
+                  <p className="font-semibold mb-1">B 질문</p>
+                  <p className="text-[#6F7787] leading-relaxed">{cycleTestQuestions.mquestion}</p>
+                </div>
+                <textarea
+                  value={cycleTestMAnswer}
+                  onChange={(event) => setCycleTestMAnswer(event.target.value)}
+                  placeholder="B 답변"
+                  className="w-full min-h-[72px] p-3 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl resize-none focus:outline-none focus:border-[#1A1A2E]"
+                />
+                <button
+                  onClick={handleCycleDefineTest}
+                  disabled={cycleTestLoading}
+                  className="w-full py-2.5 bg-[#6F8197] text-white rounded-full hover:bg-[#5E7187] transition-all disabled:bg-[#E5E2DC] disabled:text-[#6F7787]"
+                >
+                  사이클 정의 호출
+                </button>
+              </div>
+            )}
+
+            {cycleTestDefinition && (
+              <div className="rounded-xl bg-[#E0F4E8] border border-[#5A9F7C]/30 p-3 text-xs">
+                <p className="font-semibold text-[#1A1A2E] mb-1">cycle_definition</p>
+                <p className="text-[#3A3A48] leading-relaxed">{cycleTestDefinition.cycle_definition}</p>
+              </div>
+            )}
+
+            {cycleTestError && (
+              <p className="text-xs text-[#DC3545] bg-[#FFE0E0] rounded-xl p-3">{cycleTestError}</p>
+            )}
+          </div>
+        </details>
 
         <div className="flex-1" />
         <p className="text-center text-xs text-[#6F7787]">2단계 / 5단계</p>
