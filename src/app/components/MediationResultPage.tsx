@@ -300,6 +300,23 @@ export default function MediationResultPage() {
 
         setLastCheckedAt(new Date().toLocaleTimeString());
 
+        // records에서 현재 라운드의 needsCycleDefinition 감지 → 사이클 UI 전환
+        const hasCycleSignal = records.some(
+          (r) => r.roundNumber === roundInfo.roundNumber && r.needsCycleDefinition === true
+        );
+        if (hasCycleSignal) {
+          try {
+            console.log("[Cycle] needsCycleDefinition=true 감지, cycle/explore 호출 시작");
+            const questions = await getCycleExploreQuestions(Number(sessionId));
+            console.log("[Cycle] cycle/explore 응답", questions);
+            setCycleQuestions(questions);
+            setPhase("cycle");
+            return;
+          } catch (cycleError) {
+            console.error("[Cycle] cycle/explore 실패 — 다음 라운드로 fallback", cycleError);
+          }
+        }
+
         if (backendRound > roundInfo.roundNumber) {
           const next = normalizeRoundInfo(backendRound);
           applyNextRound(next, savedMyInput, undefined, currentRoundAiResponse);
@@ -349,12 +366,12 @@ export default function MediationResultPage() {
         return;
       }
 
-      // 두 번째 제출자는 AiRoundAnalyzeResponse를 받음 — needs_cycle_definition 확인
+      // 두 번째 제출자는 AiRoundAnalyzeResponse를 받음 — needsCycleDefinition 확인
       const aiResp = (typeof response === "object" && response !== null)
         ? (response as AiRoundAnalyzeResponse)
         : null;
 
-      if (aiResp?.needs_cycle_definition) {
+      if (aiResp?.needsCycleDefinition) {
         try {
           const questions = await getCycleExploreQuestions(Number(sessionId));
           setCycleQuestions(questions);

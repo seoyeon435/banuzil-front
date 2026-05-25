@@ -35,13 +35,13 @@ export interface SewingRoundInfo {
 }
 
 // POST /api/sewings/{sessionId}/{round} 응답 — 두 번째 제출자만 수신 (첫 번째는 string)
-// 백엔드 @JsonNaming(SnakeCaseStrategy) 적용 → 모든 필드 snake_case
+// 실제 응답은 camelCase (백엔드 @JsonNaming 미적용)
 export interface AiRoundAnalyzeResponse {
-  session_id: number;
-  f_message: string;
-  m_message: string;
-  needs_cycle_definition: boolean;
-  risk_flag: boolean;
+  sessionId: number | null;
+  fMessage: string | null;
+  mMessage: string | null;
+  needsCycleDefinition: boolean;
+  riskFlag: boolean;
 }
 
 export interface CycleExploreResponse {
@@ -264,6 +264,7 @@ export interface SessionRecord {
   roundNumber: number;
   content: string;
   aiResponse: string | null;
+  needsCycleDefinition?: boolean;
 }
 
 export async function getSessionRecords(sessionId: number): Promise<SessionRecord[]> {
