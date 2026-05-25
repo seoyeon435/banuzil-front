@@ -549,7 +549,7 @@ export default function MediationResultPage() {
                   <div className="bg-[#E0F4E8] border-l-4 border-[#5A9F7C] rounded-xl p-4">
                     <p className="text-xs text-[#5A9F7C] font-semibold mb-1">사이클 탐색 질문</p>
                     <p className="text-sm text-[#1A1A2E] leading-relaxed">
-                      {isFemale ? cycleQuestions.f_question : cycleQuestions.m_question}
+                      {isFemale ? cycleQuestions.fquestion : cycleQuestions.mquestion}
                     </p>
                   </div>
                   <p className="text-xs text-[#6F7787]">
