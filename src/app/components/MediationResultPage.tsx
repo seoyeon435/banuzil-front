@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   getCurrentSewingRound,
+  getCycleExploreQuestions,
+  defineCycle,
   getSessionRecords,
   getSewingErrorMessage,
   getSewingSessionList,
   isRealSewingSessionId,
   submitSewingRound,
+  type AiRoundAnalyzeResponse,
+  type CycleExploreResponse,
   type SessionRecord,
   type SewingRoundInfo,
   type SewingSession,
@@ -14,7 +18,7 @@ import {
 import { getStoredCurrentUser } from "../../api/userApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
-type RoundPhase = "input" | "waiting_partner";
+type RoundPhase = "input" | "waiting_partner" | "cycle";
 
 interface RoundViewModel {
   roundNumber: number;
@@ -193,6 +197,10 @@ export default function MediationResultPage() {
   const [myAiMessage, setMyAiMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
+  const [myGender, setMyGender] = useState("");
+  const [cycleQuestions, setCycleQuestions] = useState<CycleExploreResponse | null>(null);
+  const [cycleAnswer, setCycleAnswer] = useState("");
+  const [isCycleSubmitting, setIsCycleSubmitting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const submitInFlightRef = useRef(false);
 
@@ -217,6 +225,8 @@ export default function MediationResultPage() {
       try {
         const records = await getSessionRecords(Number(sessionId));
         setMyAiMessage(findLatestPreviousAiResponse(records, normalized.roundNumber, myEmail));
+        const myRecord = records.find((r) => r.email === myEmail);
+        if (myRecord?.gender) setMyGender(myRecord.gender);
       } catch (recordsError) {
         console.warn("[Sewing] records 조회 실패, AI 중재 메시지를 비워둡니다.", recordsError);
         setMyAiMessage(null);
@@ -231,6 +241,8 @@ export default function MediationResultPage() {
       try {
         const records = await getSessionRecords(Number(sessionId));
         setMyAiMessage(findLatestPreviousAiResponse(records, normalized.roundNumber, myEmail));
+        const myRecord = records.find((r) => r.email === myEmail);
+        if (myRecord?.gender) setMyGender(myRecord.gender);
       } catch {
         setMyAiMessage(null);
       }
@@ -337,6 +349,24 @@ export default function MediationResultPage() {
         return;
       }
 
+      // 두 번째 제출자는 AiRoundAnalyzeResponse를 받음 — needs_cycle_definition 확인
+      const aiResp = (typeof response === "object" && response !== null)
+        ? (response as AiRoundAnalyzeResponse)
+        : null;
+
+      if (aiResp?.needs_cycle_definition) {
+        try {
+          const questions = await getCycleExploreQuestions(Number(sessionId));
+          setCycleQuestions(questions);
+          setSavedMyInput(content);
+          setMyInput("");
+          setPhase("cycle");
+          return;
+        } catch {
+          // cycle/explore 실패 시 waiting_partner로 fallback
+        }
+      }
+
       setSavedMyInput(content);
       setMyInput("");
       setPhase("waiting_partner");
@@ -352,6 +382,26 @@ export default function MediationResultPage() {
     } finally {
       submitInFlightRef.current = false;
       setIsSubmitting(false);
+    }
+  };
+
+  const isFemale = /female|여성|여/i.test(myGender);
+
+  const handleCycleSubmit = async () => {
+    if (cycleAnswer.trim().length === 0 || isCycleSubmitting) return;
+    setIsCycleSubmitting(true);
+    setErrorMsg("");
+    try {
+      const fAnswer = isFemale ? cycleAnswer.trim() : "";
+      const mAnswer = !isFemale ? cycleAnswer.trim() : "";
+      await defineCycle(Number(sessionId), fAnswer, mAnswer);
+      setCycleAnswer("");
+      setCycleQuestions(null);
+      setPhase("waiting_partner");
+    } catch (error) {
+      setErrorMsg(getSewingErrorMessage(error));
+    } finally {
+      setIsCycleSubmitting(false);
     }
   };
 
@@ -494,7 +544,37 @@ export default function MediationResultPage() {
                 </div>
               </div>
 
-              {phase === "input" ? (
+              {phase === "cycle" && cycleQuestions ? (
+                <div className="space-y-4">
+                  <div className="bg-[#E0F4E8] border-l-4 border-[#5A9F7C] rounded-xl p-4">
+                    <p className="text-xs text-[#5A9F7C] font-semibold mb-1">사이클 탐색 질문</p>
+                    <p className="text-sm text-[#1A1A2E] leading-relaxed">
+                      {isFemale ? cycleQuestions.f_question : cycleQuestions.m_question}
+                    </p>
+                  </div>
+                  <p className="text-xs text-[#6F7787]">
+                    두 분의 관계 패턴을 더 잘 이해하기 위한 질문이에요. 솔직하게 답변해 주세요.
+                  </p>
+                  <textarea
+                    value={cycleAnswer}
+                    onChange={(e) => setCycleAnswer(e.target.value)}
+                    placeholder="질문에 대한 답변을 입력해주세요."
+                    className="w-full h-[120px] p-4 bg-[#FAFAF7] border-2 border-[#E5E2DC] rounded-xl focus:outline-none focus:border-[#1A1A2E] resize-none text-[#1A1A2E] text-sm"
+                  />
+                  <button
+                    onClick={handleCycleSubmit}
+                    disabled={cycleAnswer.trim().length === 0 || isCycleSubmitting}
+                    className={`w-full py-3 rounded-full font-medium text-sm transition-all ${
+                      cycleAnswer.trim().length > 0 && !isCycleSubmitting
+                        ? "bg-[#5A9F7C] text-white hover:bg-[#4A8F6C] shadow-[0_4px_16px_rgba(90,159,124,0.25)]"
+                        : "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
+                    }`}
+                  >
+                    {isCycleSubmitting ? "제출 중..." : "사이클 답변 제출"}
+                  </button>
+                  {errorMsg && <p className="text-sm text-[#DC3545] mt-1">{errorMsg}</p>}
+                </div>
+              ) : phase === "input" ? (
                 <div>
                   <p className="text-xs text-[#6F7787] mb-2 flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-[#E8C8C0] ring-1 ring-[#1A1A2E] flex items-center justify-center text-[#1A1A2E] text-xs font-bold">

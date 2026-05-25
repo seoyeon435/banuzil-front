@@ -4,13 +4,13 @@ import axios from "axios";
 import { Home, CheckCircle } from "lucide-react";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { useDisplayNames } from "../utils/useDisplayNames";
-import { createReport, isRealSewingSessionId, type ReportContent, type ReportResponse } from "../../api/sewingApi";
+import { createReport, isRealSewingSessionId, type MediationReportItem } from "../../api/sewingApi";
 
 export default function MediationCompletePage() {
   const location = useLocation();
   const { currentName, currentInitial, partnerName, partnerInitial } = useDisplayNames();
   const isEarlyExit = (location.state as { earlyExit?: boolean })?.earlyExit ?? false;
-  const [report, setReport] = useState<ReportResponse | null>(null);
+  const [report, setReport] = useState<MediationReportItem[] | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
 
@@ -25,19 +25,12 @@ export default function MediationCompletePage() {
     setReportError("");
 
     const numericSessionId = Number(sessionId);
-    const url = `/api/sewings/${numericSessionId}/report`;
-    const body = {
-      session_id: numericSessionId,
-      sessionId: numericSessionId,
-    };
 
     try {
       const response = await createReport(numericSessionId);
       setReport(response);
     } catch (error) {
       console.error("[Report] create report failed", {
-        url,
-        body,
         status: axios.isAxiosError(error) ? error.response?.status : undefined,
         data: axios.isAxiosError(error) ? error.response?.data : undefined,
       });
@@ -106,20 +99,17 @@ export default function MediationCompletePage() {
             {reportError && <p className="mt-3 text-sm text-[#DC3545]">{reportError}</p>}
           </div>
 
-          {report ? (
+          {report && report.length > 0 ? (
             <div className="mb-8 space-y-5">
-              <ReportCard
-                title={`${currentName}님을 위한 보고서`}
-                initial={currentInitial}
-                accentClassName="border-[#1A1A2E]"
-                report={report.f_report}
-              />
-              <ReportCard
-                title={`${partnerName}님을 위한 보고서`}
-                initial={partnerInitial}
-                accentClassName="border-[#6F8197]"
-                report={report.m_report}
-              />
+              {report.map((item, index) => (
+                <ReportCard
+                  key={item.reportId}
+                  title={`${index === 0 ? currentName : partnerName}님을 위한 보고서`}
+                  initial={index === 0 ? currentInitial : partnerInitial}
+                  accentClassName={index === 0 ? "border-[#1A1A2E]" : "border-[#6F8197]"}
+                  report={item}
+                />
+              ))}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-[#D4D0E8] bg-white p-8 text-center">
@@ -156,13 +146,13 @@ function ReportCard({
   title: string;
   initial: string;
   accentClassName: string;
-  report: ReportContent;
+  report: MediationReportItem;
 }) {
   const sections = [
-    { label: "나의 생각과 감정 정리", value: report.emotion_summary },
-    { label: "파트너 이해", value: report.partner_understanding },
-    { label: "중재안", value: report.mediation_plans },
-    { label: "추천 대화법", value: report.recommended_dialogues },
+    { label: "나의 생각과 감정 정리", value: report.emotionSummary },
+    { label: "파트너 이해", value: report.partnerUnderstanding },
+    { label: "중재안", value: report.mediationPlans },
+    { label: "추천 대화법", value: report.recommendedDialogues },
   ];
 
   return (

@@ -34,18 +34,20 @@ export interface SewingRoundInfo {
   [key: string]: unknown;
 }
 
-export interface CycleExploreResponse {
+// POST /api/sewings/{sessionId}/{round} 응답 — 두 번째 제출자만 수신 (첫 번째는 string)
+// 백엔드 @JsonNaming(SnakeCaseStrategy) 적용 → 모든 필드 snake_case
+export interface AiRoundAnalyzeResponse {
   session_id: number;
-  fquestion: string;
-  mquestion: string;
+  f_message: string;
+  m_message: string;
+  needs_cycle_definition: boolean;
+  risk_flag: boolean;
 }
 
-export interface CycleDefineRequest {
-  fexploreAnswer: string;
-  mexploreAnswer: string;
+export interface CycleExploreResponse {
   session_id: number;
-  f_explore_answer: string;
-  m_explore_answer: string;
+  f_question: string;
+  m_question: string;
 }
 
 export interface CycleDefineResponse {
@@ -53,17 +55,16 @@ export interface CycleDefineResponse {
   cycle_definition: string;
 }
 
-export interface ReportContent {
-  emotion_summary: string;
-  partner_understanding: string;
-  mediation_plans: string;
-  recommended_dialogues: string;
-}
-
-export interface ReportResponse {
-  session_id: number;
-  f_report: ReportContent;
-  m_report: ReportContent;
+// GET /api/sewings/{sessionId}/report 응답 — 사용자별 보고서 배열
+// 백엔드가 List<MediationReport> 엔티티를 직접 반환 (camelCase)
+export interface MediationReportItem {
+  reportId: number;
+  emotionSummary: string;
+  partnerUnderstanding: string;
+  mediationPlans: string;
+  recommendedDialogues: string;
+  user?: { email?: string; nickname?: string; [key: string]: unknown };
+  [key: string]: unknown;
 }
 
 // ── sessionId 파싱 헬퍼 ────────────────────────────
@@ -195,33 +196,18 @@ export async function defineCycle(
   fExploreAnswer: string,
   mExploreAnswer: string
 ): Promise<CycleDefineResponse> {
-  const body: CycleDefineRequest = {
-    fexploreAnswer: fExploreAnswer,
-    mexploreAnswer: mExploreAnswer,
-    session_id: sessionId,
-    f_explore_answer: fExploreAnswer,
-    m_explore_answer: mExploreAnswer,
-  };
-
   const response = await apiClient.post<CycleDefineResponse>(
     `/api/sewings/${sessionId}/cycle/define`,
-    body
+    { session_id: sessionId, f_explore_answer: fExploreAnswer, m_explore_answer: mExploreAnswer }
   );
-
   return response.data;
 }
 
-export async function createReport(sessionId: number): Promise<ReportResponse> {
-  const body = {
-    session_id: sessionId,
-    sessionId,
-  };
-
-  const response = await apiClient.post<ReportResponse>(
-    `/api/sewings/${sessionId}/report`,
-    body
+// GET /api/sewings/{sessionId}/report — 백엔드가 GET 메서드, body 없음
+export async function createReport(sessionId: number): Promise<MediationReportItem[]> {
+  const response = await apiClient.get<MediationReportItem[]>(
+    `/api/sewings/${sessionId}/report`
   );
-
   return response.data;
 }
 
