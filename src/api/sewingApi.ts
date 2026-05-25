@@ -46,8 +46,8 @@ export interface AiRoundAnalyzeResponse {
 
 export interface CycleExploreResponse {
   session_id: number;
-  fquestion: string;
-  mquestion: string;
+  fQuestion: string;
+  mQuestion: string;
 }
 
 export interface CycleDefineResponse {
