@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import {
   getCurrentSewingRound,
   getCycleExploreQuestions,
+  getCycleDefinition,
   defineCycle,
   getSessionRecords,
   getSewingErrorMessage,
@@ -18,7 +19,7 @@ import {
 import { getStoredCurrentUser } from "../../api/userApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
-type RoundPhase = "input" | "waiting_partner" | "cycle";
+type RoundPhase = "input" | "waiting_partner" | "cycle" | "cycle_result";
 
 interface RoundViewModel {
   roundNumber: number;
@@ -201,8 +202,13 @@ export default function MediationResultPage() {
   const [cycleQuestions, setCycleQuestions] = useState<CycleExploreResponse | null>(null);
   const [cycleAnswer, setCycleAnswer] = useState("");
   const [isCycleSubmitting, setIsCycleSubmitting] = useState(false);
+  const [cycleDefinitionText, setCycleDefinitionText] = useState<string | null>(null);
+  const [cycleFMessage, setCycleFMessage] = useState<string | null>(null);
+  const [cycleMMessage, setCycleMMessage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const submitInFlightRef = useRef(false);
+  const cycleSubmittedRoundRef = useRef<number | null>(null);
+  const cycleDefinitionPollingRef = useRef(false);
 
   const sessionId = sessionStorage.getItem("sewingSessionId");
   const canUseRealApi = isRealSewingSessionId(sessionId);
@@ -301,9 +307,12 @@ export default function MediationResultPage() {
         setLastCheckedAt(new Date().toLocaleTimeString());
 
         // records에서 현재 라운드의 needsCycleDefinition 감지 → 사이클 UI 전환
-        const hasCycleSignal = records.some(
-          (r) => r.roundNumber === roundInfo.roundNumber && r.needsCycleDefinition === true
-        );
+        // 이미 이 라운드에서 사이클을 제출했으면 다시 트리거하지 않음
+        const hasCycleSignal =
+          cycleSubmittedRoundRef.current !== roundInfo.roundNumber &&
+          records.some(
+            (r) => r.roundNumber === roundInfo.roundNumber && r.needsCycleDefinition === true
+          );
         if (hasCycleSignal) {
           try {
             console.log("[Cycle] needsCycleDefinition=true 감지, cycle/explore 호출 시작");
@@ -314,6 +323,23 @@ export default function MediationResultPage() {
             return;
           } catch (cycleError) {
             console.error("[Cycle] cycle/explore 실패 — 다음 라운드로 fallback", cycleError);
+          }
+        }
+
+        // 사이클 제출 후 파트너 제출 대기 중이면 cycle definition 폴링
+        if (cycleDefinitionPollingRef.current && !cycleDefinitionText) {
+          try {
+            const def = await getCycleDefinition(Number(sessionId));
+            if (def.cycleDefinition) {
+              setCycleDefinitionText(def.cycleDefinition);
+              if (def.fMessage) setCycleFMessage(def.fMessage);
+              if (def.mMessage) setCycleMMessage(def.mMessage);
+              cycleDefinitionPollingRef.current = false;
+              setPhase("cycle_result");
+              return;
+            }
+          } catch {
+            // 아직 생성 중이면 무시하고 다음 폴링 때 재시도
           }
         }
 
@@ -412,6 +438,8 @@ export default function MediationResultPage() {
       const fAnswer = isFemale ? cycleAnswer.trim() : "";
       const mAnswer = !isFemale ? cycleAnswer.trim() : "";
       await defineCycle(Number(sessionId), fAnswer, mAnswer);
+      cycleSubmittedRoundRef.current = roundInfo.roundNumber;
+      cycleDefinitionPollingRef.current = true;
       setCycleAnswer("");
       setCycleQuestions(null);
       setPhase("waiting_partner");
@@ -421,6 +449,19 @@ export default function MediationResultPage() {
       setIsCycleSubmitting(false);
     }
   };
+
+  const handleCycleDefinitionNext = useCallback(async () => {
+    const personalMsg = isFemale ? cycleFMessage : cycleMMessage;
+    setCycleDefinitionText(null);
+    setCycleFMessage(null);
+    setCycleMMessage(null);
+    try {
+      const current = await getCurrentSewingRound(Number(sessionId));
+      applyNextRound(normalizeRoundInfo(current), savedMyInput, undefined, personalMsg);
+    } catch {
+      applyNextRound(normalizeRoundInfo(roundInfo.roundNumber + 1), savedMyInput, undefined, personalMsg);
+    }
+  }, [isFemale, cycleFMessage, cycleMMessage, sessionId, savedMyInput, applyNextRound, roundInfo.roundNumber]);
 
   const handleComplete = () => {
     navigate("/mediation/complete");
@@ -545,7 +586,15 @@ export default function MediationResultPage() {
                   {roundInfo.roundNumber}라운드 · {roundInfo.title}
                 </p>
                 <p className="text-xs text-[#1A1A2E]">
-                  {isLoading ? "현재 라운드 정보를 불러오는 중" : phase === "waiting_partner" ? `${partnerName}의 답변을 기다리는 중` : `${currentName} 답변 입력 중`}
+                  {isLoading
+                    ? "현재 라운드 정보를 불러오는 중"
+                    : phase === "waiting_partner"
+                    ? `${partnerName}의 답변을 기다리는 중`
+                    : phase === "cycle_result"
+                    ? "사이클 정의 확인"
+                    : phase === "cycle"
+                    ? "사이클 탐색 질문"
+                    : `${currentName} 답변 입력 중`}
                 </p>
               </div>
             </div>
@@ -591,6 +640,19 @@ export default function MediationResultPage() {
                   </button>
                   {errorMsg && <p className="text-sm text-[#DC3545] mt-1">{errorMsg}</p>}
                 </div>
+              ) : phase === "cycle_result" ? (
+                <div className="space-y-4">
+                  <div className="bg-[#E0F4E8] border border-[#5A9F7C]/40 rounded-xl p-5">
+                    <p className="text-sm font-semibold text-[#5A9F7C] mb-3">우리의 관계 사이클</p>
+                    <p className="text-sm text-[#1A1A2E] leading-relaxed whitespace-pre-wrap">{cycleDefinitionText}</p>
+                  </div>
+                  <button
+                    onClick={handleCycleDefinitionNext}
+                    className="w-full py-3 rounded-full font-medium text-sm bg-[#1A1A2E] text-white hover:bg-[#0F0F1F] shadow-[0_4px_16px_rgba(35,40,56,0.15)] transition-all"
+                  >
+                    다음
+                  </button>
+                </div>
               ) : phase === "input" ? (
                 <div>
                   <p className="text-xs text-[#6F7787] mb-2 flex items-center gap-2">
@@ -621,6 +683,16 @@ export default function MediationResultPage() {
               ) : (
                 <div className="space-y-4">
                   <AnswerCard initial={currentInitial} title={`${currentName}의 답변`} answer={savedMyInput} />
+
+                  {cycleDefinitionPollingRef.current && (
+                    <div className="bg-[#EBE9F2] border border-[#D4D0E8] rounded-xl p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#6F8197] animate-pulse" />
+                        <p className="text-xs text-[#6F7787]">상대방의 사이클 답변을 기다리는 중...</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="bg-[#FAFAF7] border border-[#6F8197]/30 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-6 h-6 rounded-full border-2 border-[#6F8197] flex items-center justify-center">
@@ -629,10 +701,7 @@ export default function MediationResultPage() {
                       <span className="text-sm font-medium text-[#1A1A2E]">{partnerName}의 답변</span>
                       <span className="ml-auto px-2 py-0.5 bg-[#EBE9F2] text-[#6F8197] text-xs rounded-full">대기 중</span>
                     </div>
-                    <p className="text-xs text-[#6F7787]">
-                      일반 모드에서는 상대방 답변이 제출되면 백엔드 current round 값이 갱신되고, 이 화면이 자동으로 다음 라운드를 표시합니다.
-                    </p>
-                    {lastCheckedAt && <p className="text-xs text-[#6F7787] mt-2">마지막 확인: {lastCheckedAt}</p>}
+                    {lastCheckedAt && <p className="text-xs text-[#6F7787]">마지막 확인: {lastCheckedAt}</p>}
                   </div>
                 </div>
               )}

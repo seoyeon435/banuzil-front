@@ -55,6 +55,12 @@ export interface CycleDefineResponse {
   cycle_definition: string;
 }
 
+export interface CycleDefinitionResult {
+  cycleDefinition: string;
+  fMessage?: string;
+  mMessage?: string;
+}
+
 // GET /api/sewings/{sessionId}/report 응답 — 사용자별 보고서 배열
 // 백엔드가 List<MediationReport> 엔티티를 직접 반환 (camelCase)
 export interface MediationReportItem {
@@ -199,6 +205,13 @@ export async function defineCycle(
   const response = await apiClient.post<CycleDefineResponse>(
     `/api/sewings/${sessionId}/cycle/define`,
     { session_id: sessionId, f_explore_answer: fExploreAnswer, m_explore_answer: mExploreAnswer }
+  );
+  return response.data;
+}
+
+export async function getCycleDefinition(sessionId: number): Promise<CycleDefinitionResult> {
+  const response = await apiClient.get<CycleDefinitionResult>(
+    `/api/sewings/${sessionId}/cycle/definition`
   );
   return response.data;
 }
