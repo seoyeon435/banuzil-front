@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import MediationProgressHeader from "./MediationProgressHeader";
+import BrandMark from "./ui/BrandMark";
 import { createSewingSession, getSewingErrorMessage, isRealSewingSessionId } from "../../api/sewingApi";
-import AuthDebugBadge from "./AuthDebugBadge";
 
 export default function MediationStartPage() {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ export default function MediationStartPage() {
   return (
     <>
       <MediationProgressHeader currentStep="start" />
-      <AuthDebugBadge />
-
       <div className="bg-[#FAFAF7] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[640px]">
           {/* Heading */}
@@ -74,7 +72,7 @@ export default function MediationStartPage() {
             </div>
             <div className="bg-white rounded-xl p-6 border-l-4 border-[#5A9F7C] shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">🧵</span>
+                <BrandMark size={28} />
                 <div>
                   <p className="font-semibold text-[#1A1A2E] mb-1">EFT 흐름에 따라 감정을 돌아봐요</p>
                   <p className="text-sm text-[#6F7787]">

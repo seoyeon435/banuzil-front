@@ -2,26 +2,16 @@ import { Link, useNavigate } from "react-router";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  defineCycle,
-  getCycleExploreQuestions,
   getCurrentSewingRound,
   getSewingErrorMessage,
   getSewingSessionList,
   isRealSewingSessionId,
   submitSewingRound,
-  type CycleExploreResponse,
-  type CycleDefineResponse,
   type SewingSession,
 } from "../../api/sewingApi";
-import AuthDebugBadge from "./AuthDebugBadge";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
-const conflictTypes = ["연락문제", "가치관차이", "약속파기", "데이트비용", "기타"];
-
-// [MOCK 비활성화] 상대방 입장 본문은 BE endpoint 없으면 표시 불가.
-const PARTNER_INPUT_PLACEHOLDER = "(상대방 입장은 실제 BE에서 받아와야 합니다 — 현재 endpoint 미정)";
-
-type InputPhase = "writing" | "waiting_partner" | "partner_loaded";
+type InputPhase = "writing" | "waiting_partner";
 
 function findCurrentSession(sessions: SewingSession[], sessionId: string | null): SewingSession | undefined {
   return sessions.find((session) => Number(session.sessionId) === Number(sessionId));
@@ -31,7 +21,6 @@ function readBooleanField(session: SewingSession | undefined, keys: string[]): b
   if (!session) return false;
   return keys.some((key) => session[key] === true || session[key] === "true" || session[key] === "Y");
 }
-
 
 function getRoundSaveState(session: SewingSession | undefined, localSaved: boolean, submittedRound: number) {
   const status = typeof session?.status === "string" ? session.status.toUpperCase() : "";
@@ -54,19 +43,12 @@ export default function MediationInputPage() {
   const [input, setInput] = useState("");
   const [submittedInput, setSubmittedInput] = useState("");
   const [showTips, setShowTips] = useState(false);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [phase, setPhase] = useState<InputPhase>("writing");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [isRoundSaved, setIsRoundSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
-  const [cycleTestQuestions, setCycleTestQuestions] = useState<CycleExploreResponse | null>(null);
-  const [cycleTestDefinition, setCycleTestDefinition] = useState<CycleDefineResponse | null>(null);
-  const [cycleTestFAnswer, setCycleTestFAnswer] = useState("");
-  const [cycleTestMAnswer, setCycleTestMAnswer] = useState("");
-  const [cycleTestLoading, setCycleTestLoading] = useState(false);
-  const [cycleTestError, setCycleTestError] = useState("");
   const submitInFlightRef = useRef(false);
   const hasNavigatedRef = useRef(false);
 
@@ -78,29 +60,18 @@ export default function MediationInputPage() {
       .catch(() => {});
   }, []);
 
-  const toggleType = (type: string) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
   const checkBothInputsSaved = useCallback(async (localSaved = isRoundSaved) => {
     const sessionId = sessionStorage.getItem("sewingSessionId");
-    console.log("[Sewing] 현재 sessionId", sessionId);
-    console.log("[Sewing] session-list polling 호출 여부", true);
 
     try {
       const sessions = await getSewingSessionList();
-      console.log("[Sewing] session-list polling 응답", sessions);
       const currentSession = findCurrentSession(sessions, sessionId);
-      console.log("[Sewing] 현재 세션 상태", currentSession);
       const listState = getRoundSaveState(currentSession, localSaved, currentRound);
       let detailState = null;
 
       if (isRealSewingSessionId(sessionId)) {
         try {
           const backendRound = await getCurrentSewingRound(Number(sessionId));
-          console.log("[Sewing] current-round polling 응답", backendRound);
           const bothDone = backendRound > currentRound;
           detailState = {
             mySaved: localSaved || bothDone,
@@ -117,9 +88,6 @@ export default function MediationInputPage() {
         partnerSaved: listState.partnerSaved || detailState?.partnerSaved === true,
         bothSaved: listState.bothSaved || detailState?.bothSaved === true,
       };
-      console.log("[Sewing] 내 입장 저장 여부", state.mySaved);
-      console.log("[Sewing] 상대방 입장 저장 여부", state.partnerSaved);
-      console.log("[Sewing] AI 분석 화면 이동 조건 충족 여부", state.bothSaved);
       setLastCheckedAt(new Date().toLocaleTimeString());
 
       if (state.bothSaved && !hasNavigatedRef.current) {
@@ -152,22 +120,13 @@ export default function MediationInputPage() {
     const isJoined = sessionStorage.getItem("sewingSessionJoined") === "true";
 
     if (!isRealSewingSessionId(sessionId)) {
-      console.log("[Sewing] round 저장 호출 여부", false, { sessionId, round: 1 });
       throw new Error("중재 방 정보가 없습니다.");
     }
 
     if (!isJoined) {
-      const isMock = sessionStorage.getItem("sewingSessionJoined") === "mock";
-      console.log("[Sewing] round 저장 호출 여부", false, { sessionId, isJoined, isMock, round: 1 });
-      if (isMock) {
-        console.log("[Sewing] mock fallback 진행 여부", true);
-        setIsRoundSaved(true);
-        return;
-      }
       throw new Error("상대방 참여 후 입장을 저장할 수 있습니다.");
     }
 
-    console.log("[Sewing] round 저장 조건 충족", { sessionId, isJoined, round: currentRound });
     await submitSewingRound(Number(sessionId), currentRound, content);
     setIsRoundSaved(true);
   };
@@ -208,77 +167,16 @@ export default function MediationInputPage() {
     }
   };
 
-  const handleLoadPartner = async () => {
-    const sessionId = sessionStorage.getItem("sewingSessionId");
-    console.log("[Sewing] mock join 완료", { sessionId });
-    console.log("[Sewing] mock join 이후 실제 round 저장 API 호출 여부", false);
-    setIsRoundSaved(true);
-    setPhase("partner_loaded");
-  };
-
-  const handleStartAnalysis = () => {
-    navigate("/mediation/analyzing");
-  };
-
-  const getCycleTestSessionId = () => {
-    const sessionId = sessionStorage.getItem("sewingSessionId");
-    if (!isRealSewingSessionId(sessionId)) {
-      throw new Error("테스트할 중재 방 정보가 없습니다.");
-    }
-    return Number(sessionId);
-  };
-
-  const handleCycleExploreTest = async () => {
-    setCycleTestLoading(true);
-    setCycleTestError("");
-    setCycleTestDefinition(null);
-
-    try {
-      const questions = await getCycleExploreQuestions(getCycleTestSessionId());
-      console.log("[Cycle test] explore response", questions);
-      setCycleTestQuestions(questions);
-    } catch (error) {
-      console.error("[Cycle test] explore failed", error);
-      setCycleTestError(error instanceof Error ? error.message : "사이클 탐색 질문 호출에 실패했어요.");
-    } finally {
-      setCycleTestLoading(false);
-    }
-  };
-
-  const handleCycleDefineTest = async () => {
-    setCycleTestLoading(true);
-    setCycleTestError("");
-
-    try {
-      const definition = await defineCycle(
-        getCycleTestSessionId(),
-        cycleTestFAnswer.trim(),
-        cycleTestMAnswer.trim()
-      );
-      console.log("[Cycle test] define response", definition);
-      setCycleTestDefinition(definition);
-    } catch (error) {
-      console.error("[Cycle test] define failed", error);
-      setCycleTestError(error instanceof Error ? error.message : "사이클 정의 호출에 실패했어요.");
-    } finally {
-      setCycleTestLoading(false);
-    }
-  };
-
-  // ── 상대방 대기 / 로드 완료 화면 ──────────────────────────────
+  // ── 상대방 대기 화면 ──────────────────────────────
   if (phase !== "writing") {
     return (
       <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[760px]">
           {/* 진행 단계 */}
           <div className="flex items-center justify-center gap-2 mb-8 text-xs text-[#6F7787]">
-            <span className="text-[#5A9F7C] font-semibold">
-              {isRoundSaved ? "✓ 나의 입장 저장됨" : "✓ 중재 방 생성됨"}
-            </span>
+            <span className="text-[#5A9F7C] font-semibold">✓ 나의 입장 저장됨</span>
             <span className="mx-2 text-[#E5E2DC]">→</span>
-            <span className={phase === "partner_loaded" ? "text-[#5A9F7C] font-semibold" : "text-[#1A1A2E] font-semibold"}>
-              {phase === "partner_loaded" ? "✓ 상대방 입장 준비됨" : "⏳ 상대방 입장 대기 중"}
-            </span>
+            <span className="text-[#1A1A2E] font-semibold">⏳ 상대방 입장 대기 중</span>
             <span className="mx-2 text-[#E5E2DC]">→</span>
             <span className="text-[#6F7787]">AI 분석</span>
           </div>
@@ -302,99 +200,42 @@ export default function MediationInputPage() {
                   <span className="text-white text-xs font-bold">✓</span>
                 </div>
                 <span className="font-semibold text-[#1A1A2E] text-sm">{currentName}의 입장</span>
-                <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
-                  isRoundSaved ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#EBE9F2] text-[#6F8197]"
-                }`}>
-                  {isRoundSaved ? "저장 완료" : "저장 대기"}
-                </span>
+                <span className="ml-auto px-2 py-0.5 text-xs rounded-full bg-[#E0F4E8] text-[#5A9F7C]">저장 완료</span>
               </div>
               <p className="text-[#6F7787] text-sm leading-relaxed line-clamp-6">{submittedInput}</p>
             </div>
 
             {/* 상대방 입장 */}
-            <div className={`bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(35,40,56,0.102)] border-t-4 transition-all duration-500 ${
-              phase === "partner_loaded" ? "border-[#6F8197]" : "border-[#E5E2DC]"
-            }`}>
+            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_32px_rgba(35,40,56,0.102)] border-t-4 border-[#E5E2DC]">
               <div className="flex items-center gap-2 mb-4">
-                {phase === "partner_loaded" ? (
-                  <div className="w-7 h-7 rounded-full bg-[#5A9F7C] flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">✓</span>
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 rounded-full border-2 border-[#6F8197] flex items-center justify-center flex-shrink-0">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#6F8197] animate-pulse" />
-                  </div>
-                )}
-                <span className="font-semibold text-[#1A1A2E] text-sm">{partnerName}님의 입장</span>
-                <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
-                  phase === "partner_loaded"
-                    ? "bg-[#E0F4E8] text-[#5A9F7C]"
-                    : "bg-[#EBE9F2] text-[#6F8197]"
-                }`}>
-                  {phase === "partner_loaded" ? "저장 완료" : "대기 중..."}
-                </span>
-              </div>
-
-              {phase === "partner_loaded" ? (
-                <p className="text-[#6F7787] text-sm leading-relaxed line-clamp-6 italic">{PARTNER_INPUT_PLACEHOLDER}</p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-full" />
-                  <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-5/6" />
-                  <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-4/6" />
-                  <p className="text-xs text-[#6F7787] mt-3">{partnerName}님이 입장을 입력하고 있어요.</p>
+                <div className="w-7 h-7 rounded-full border-2 border-[#6F8197] flex items-center justify-center flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#6F8197] animate-pulse" />
                 </div>
-              )}
+                <span className="font-semibold text-[#1A1A2E] text-sm">{partnerName}님의 입장</span>
+                <span className="ml-auto px-2 py-0.5 text-xs rounded-full bg-[#EBE9F2] text-[#6F8197]">대기 중...</span>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-full" />
+                <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-5/6" />
+                <div className="h-3 bg-[#E5E2DC] rounded animate-pulse w-4/6" />
+                <p className="text-xs text-[#6F7787] mt-3">{partnerName}님이 입장을 입력하고 있어요.</p>
+              </div>
             </div>
           </div>
 
           {/* 안내 문구 */}
-          {phase === "waiting_partner" ? (
-            <div className="text-center mb-6">
-              <p className="text-[#1A1A2E] font-semibold mb-1">
-                {isRoundSaved ? "내 입장이 저장되었어요" : "시연 모드로 진행 중이에요"}
-              </p>
-              {isRealSewingSessionId(sessionStorage.getItem("sewingSessionId")) && (
-                <p className="text-sm text-[#1A1A2E] font-semibold mb-1">방 번호: {sessionStorage.getItem("sewingSessionId")}</p>
-              )}
-              <p className="text-[#6F7787] text-sm">
-                {partnerName}님의 입장이 입력되면 AI가 두 사람을 중립적으로 분석해드려요.
-              </p>
-              {lastCheckedAt && (
-                <p className="text-xs text-[#6F7787] mt-2">마지막 확인: {lastCheckedAt}</p>
-              )}
-            </div>
-          ) : (
-            <div className="text-center mb-6">
-              <p className="text-[#1A1A2E] font-semibold mb-1">두 사람의 입장이 모두 준비되었어요!</p>
-              <p className="text-sm text-[#6F7787]">AI가 중립적으로 분석을 시작합니다.</p>
-            </div>
-          )}
-
-          {/* 버튼 영역 */}
-          {phase === "waiting_partner" ? (
-            <details className="bg-[#EBE9F2] border border-[#EBE9F2] rounded-xl p-4">
-              <summary className="cursor-pointer text-xs font-semibold text-[#1A1A2E]">
-                개발용 mock 제어 열기
-              </summary>
-              <p className="text-xs text-[#6F7787] my-3">
-                실제 API 테스트 중에는 사용하지 마세요. 서버 상태와 무관하게 화면만 진행합니다.
-              </p>
-              <button
-                onClick={handleLoadPartner}
-                className="w-full py-3 bg-[#EFEDE7] text-[#1A1A2E] rounded-full hover:bg-[#E5E2DC] transition-all font-medium"
-              >
-                개발용: 상대방 입장 완료 처리
-              </button>
-            </details>
-          ) : (
-            <button
-              onClick={handleStartAnalysis}
-              className="w-full py-4 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all font-semibold text-lg shadow-[0_4px_16px_rgba(35,40,56,0.15)]"
-            >
-              AI 중재 시작하기 →
-            </button>
-          )}
+          <div className="text-center">
+            <p className="text-[#1A1A2E] font-semibold mb-1">내 입장이 저장되었어요</p>
+            {isRealSewingSessionId(sessionStorage.getItem("sewingSessionId")) && (
+              <p className="text-sm text-[#1A1A2E] font-semibold mb-1">방 번호: {sessionStorage.getItem("sewingSessionId")}</p>
+            )}
+            <p className="text-[#6F7787] text-sm">
+              {partnerName}님의 입장이 입력되면 AI가 두 사람을 중립적으로 분석해드려요.
+            </p>
+            {lastCheckedAt && (
+              <p className="text-xs text-[#6F7787] mt-2">마지막 확인: {lastCheckedAt}</p>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -403,7 +244,6 @@ export default function MediationInputPage() {
   // ── 입력 화면 ──────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row min-w-0 overflow-x-hidden [word-break:keep-all]">
-      <AuthDebugBadge />
       {/* 왼쪽 패널 */}
       <div className="w-full lg:w-[380px] bg-[#EBE9F2] p-6 lg:p-8 flex flex-col flex-shrink-0">
         {/* 연결 정보 */}
@@ -456,67 +296,7 @@ export default function MediationInputPage() {
           )}
         </div>
 
-        {/* TODO: remove after cycle API integration test */}
-        <details className="mt-4 bg-white rounded-2xl shadow-[0_4px_16px_rgba(35,40,56,0.078)] p-5">
-          <summary className="cursor-pointer text-sm font-semibold text-[#1A1A2E]">
-            개발용 사이클 API 테스트
-          </summary>
-          <div className="mt-4 space-y-3">
-            <button
-              onClick={handleCycleExploreTest}
-              disabled={cycleTestLoading}
-              className="w-full py-2.5 bg-[#1A1A2E] text-white rounded-full hover:bg-[#0F0F1F] transition-all disabled:bg-[#E5E2DC] disabled:text-[#6F7787]"
-            >
-              {cycleTestLoading ? "호출 중..." : "탐색 질문 호출"}
-            </button>
-
-            {cycleTestQuestions && (
-              <div className="space-y-3 text-xs text-[#1A1A2E]">
-                <div className="rounded-xl bg-[#FAFAF7] border border-[#E5E2DC] p-3">
-                  <p className="font-semibold mb-1">A 질문</p>
-                  <p className="text-[#6F7787] leading-relaxed">{cycleTestQuestions.fquestion}</p>
-                </div>
-                <textarea
-                  value={cycleTestFAnswer}
-                  onChange={(event) => setCycleTestFAnswer(event.target.value)}
-                  placeholder="A 답변"
-                  className="w-full min-h-[72px] p-3 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl resize-none focus:outline-none focus:border-[#1A1A2E]"
-                />
-                <div className="rounded-xl bg-[#FAFAF7] border border-[#E5E2DC] p-3">
-                  <p className="font-semibold mb-1">B 질문</p>
-                  <p className="text-[#6F7787] leading-relaxed">{cycleTestQuestions.mquestion}</p>
-                </div>
-                <textarea
-                  value={cycleTestMAnswer}
-                  onChange={(event) => setCycleTestMAnswer(event.target.value)}
-                  placeholder="B 답변"
-                  className="w-full min-h-[72px] p-3 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl resize-none focus:outline-none focus:border-[#1A1A2E]"
-                />
-                <button
-                  onClick={handleCycleDefineTest}
-                  disabled={cycleTestLoading}
-                  className="w-full py-2.5 bg-[#6F8197] text-white rounded-full hover:bg-[#5E7187] transition-all disabled:bg-[#E5E2DC] disabled:text-[#6F7787]"
-                >
-                  사이클 정의 호출
-                </button>
-              </div>
-            )}
-
-            {cycleTestDefinition && (
-              <div className="rounded-xl bg-[#E0F4E8] border border-[#5A9F7C]/30 p-3 text-xs">
-                <p className="font-semibold text-[#1A1A2E] mb-1">cycle_definition</p>
-                <p className="text-[#3A3A48] leading-relaxed">{cycleTestDefinition.cycle_definition}</p>
-              </div>
-            )}
-
-            {cycleTestError && (
-              <p className="text-xs text-[#DC3545] bg-[#FFE0E0] rounded-xl p-3">{cycleTestError}</p>
-            )}
-          </div>
-        </details>
-
         <div className="flex-1" />
-        <p className="text-center text-xs text-[#6F7787]">2단계 / 5단계</p>
       </div>
 
       {/* 오른쪽 패널 */}
@@ -541,26 +321,6 @@ export default function MediationInputPage() {
             />
             <div className="text-right text-sm text-[#6F7787] mt-2">
               {input.length}/1000
-            </div>
-          </div>
-
-          {/* 갈등 유형 */}
-          <div className="mb-8">
-            <p className="text-sm text-[#6F7787] mb-3">갈등 유형 (선택사항):</p>
-            <div className="flex flex-wrap gap-2">
-              {conflictTypes.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => toggleType(type)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedTypes.includes(type)
-                      ? "bg-[#1A1A2E] text-white"
-                      : "bg-[#EFEDE7] text-[#6F7787] hover:bg-[#E5E2DC]"
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
             </div>
           </div>
 

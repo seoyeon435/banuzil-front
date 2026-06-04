@@ -1,18 +1,36 @@
 import { Link, useLocation } from "react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { Home, CheckCircle } from "lucide-react";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { useDisplayNames } from "../utils/useDisplayNames";
-import { createReport, isRealSewingSessionId, type MediationReportItem } from "../../api/sewingApi";
+import BrandMark from "./ui/BrandMark";
+import { createReport, triggerGenerateReport, isRealSewingSessionId, type MediationReportItem } from "../../api/sewingApi";
+import { getStoredCurrentUser } from "../../api/userApi";
+
+const SECTIONS = [
+  { key: "emotionSummary",       label: "나의 생각과 감정 정리", accent: "#1A1A2E",  bg: "#F4F3F8" },
+  { key: "partnerUnderstanding", label: "파트너 이해",           accent: "#6F8197",  bg: "#F0F3F6" },
+  { key: "mediationPlans",       label: "중재안",                accent: "#5A9F7C",  bg: "#EFF8F3" },
+  { key: "recommendedDialogues", label: "추천 대화법",           accent: "#C88579",  bg: "#FBF3F1" },
+] as const;
 
 export default function MediationCompletePage() {
   const location = useLocation();
-  const { currentName, currentInitial, partnerName, partnerInitial } = useDisplayNames();
+  const { currentName, currentInitial } = useDisplayNames();
+  const myEmail = getStoredCurrentUser().email;
   const isEarlyExit = (location.state as { earlyExit?: boolean })?.earlyExit ?? false;
   const [report, setReport] = useState<MediationReportItem[] | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(false);
+  const [reportGenerated, setReportGenerated] = useState(false);
   const [reportError, setReportError] = useState("");
+  const pollIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current !== null) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   const handleCreateReport = async () => {
     const sessionId = sessionStorage.getItem("sewingSessionId");
@@ -22,117 +40,157 @@ export default function MediationCompletePage() {
     }
 
     setIsReportLoading(true);
+    setReportGenerated(true);
     setReportError("");
 
     const numericSessionId = Number(sessionId);
 
+    const stopPolling = () => {
+      if (pollIntervalRef.current !== null) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+
     try {
-      const response = await createReport(numericSessionId);
-      setReport(response);
+      await triggerGenerateReport(numericSessionId);
     } catch (error) {
-      console.error("[Report] create report failed", {
+      console.warn("[Report] generate-report trigger failed", {
         status: axios.isAxiosError(error) ? error.response?.status : undefined,
-        data: axios.isAxiosError(error) ? error.response?.data : undefined,
       });
-      setReportError("보고서를 생성하지 못했어요. 잠시 뒤 다시 시도해주세요.");
-    } finally {
-      setIsReportLoading(false);
+    }
+
+    let resolved = false;
+
+    const fetchReport = async () => {
+      try {
+        const response = await createReport(numericSessionId);
+        if (response.length > 0) {
+          resolved = true;
+          setReport(response);
+          setIsReportLoading(false);
+          stopPolling();
+        }
+      } catch (error) {
+        resolved = true;
+        console.error("[Report] create report failed", {
+          status: axios.isAxiosError(error) ? error.response?.status : undefined,
+          data: axios.isAxiosError(error) ? error.response?.data : undefined,
+        });
+        setReportError("보고서를 생성하지 못했어요. 잠시 뒤 다시 시도해주세요.");
+        setReportGenerated(false);
+        setIsReportLoading(false);
+        stopPolling();
+      }
+    };
+
+    await fetchReport();
+
+    if (!resolved) {
+      pollIntervalRef.current = window.setInterval(fetchReport, 3000);
     }
   };
+
+  const myReport = report
+    ? (report.find((item) => item.user?.email === myEmail) ?? report[0])
+    : null;
+
+  const isButtonDisabled = isReportLoading || reportGenerated;
 
   return (
     <>
       <MediationProgressHeader currentStep="complete" />
-      <div className="min-h-screen bg-[#FAFAF7] py-12 px-6">
-      <div className="max-w-[820px] mx-auto">
-        {/* Early Exit Banner */}
-        {isEarlyExit && (
-          <div className="bg-[#FFF3CD] border border-[#6F8197] rounded-xl px-6 py-4 mb-8 flex items-start gap-3">
-            <span className="text-xl flex-shrink-0">📝</span>
-            <p className="text-sm text-[#6F7787] leading-relaxed">
-              현재까지의 상담 내용을 바탕으로 정리한 결과입니다. 나머지 라운드를 완료하면 더 자세한 분석을 받을 수 있어요.
-            </p>
-          </div>
-        )}
+      <div className="min-h-screen bg-[#FAFAF7] py-12 px-4 sm:px-6">
+        <div className="max-w-[760px] mx-auto">
 
-        {/* Success */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-[#5A9F7C] mb-6 animate-pulse">
-            <CheckCircle className="w-12 h-12 text-white" />
-          </div>
-          <h1 className="text-[36px] font-semibold text-[#1A1A2E] mb-3">
-            중재가 완료되었어요 🧵
-          </h1>
-          <p className="text-lg text-[#6F7787]">
-            두 사람의 이야기를 잘 들었어요
-          </p>
-        </div>
-
-        {/* Final Report Card */}
-        <div className="bg-white rounded-2xl p-10 shadow-[0_12px_48px_rgba(35,40,56,0.12)] mb-8">
-          {/* Header */}
-          <div className="border-b border-[#E5E2DC] pb-6 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <h2 className="text-2xl font-semibold text-[#1A1A2E]">최종 중재 보고서</h2>
-              {report && <span className="text-sm text-[#6F7787]">방 번호: {report.session_id}</span>}
+          {isEarlyExit && (
+            <div className="bg-[#FFF3CD] border border-[#6F8197] rounded-xl px-6 py-4 mb-8 flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">📝</span>
+              <p className="text-sm text-[#6F7787] leading-relaxed">
+                현재까지의 상담 내용을 바탕으로 정리한 결과입니다. 나머지 라운드를 완료하면 더 자세한 분석을 받을 수 있어요.
+              </p>
             </div>
+          )}
+
+          {/* 완료 헤더 */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#5A9F7C] mb-5">
+              <CheckCircle className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-semibold text-[#1A1A2E] mb-2">중재가 완료되었어요</h1>
+            <p className="text-[#6F7787]">두 사람의 이야기를 잘 들었어요</p>
           </div>
 
-          <div className="mb-8 rounded-xl border border-[#E5E2DC] bg-[#FAFAF7] p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-base font-semibold text-[#1A1A2E]">AI 최종 보고서 생성</p>
-                <p className="mt-1 text-sm text-[#6F7787]">전체 상담 히스토리를 바탕으로 두 사람 각각의 보고서를 생성합니다.</p>
+          {/* 보고서 영역 */}
+          <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(35,40,56,0.10)] mb-8 overflow-hidden">
+            {/* 보고서 헤더 */}
+            <div className="px-8 pt-8 pb-6 border-b border-[#E5E2DC]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <h2 className="text-xl font-semibold text-[#1A1A2E]">최종 중재 보고서</h2>
+                <span className="text-xs text-[#6F7787]">방 번호: {sessionStorage.getItem("sewingSessionId")}</span>
+              </div>
+            </div>
+
+            {/* 생성 버튼 영역 */}
+            <div className="px-8 py-5 border-b border-[#E5E2DC] bg-[#FAFAF7] flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#1A1A2E]">AI 최종 보고서 생성</p>
+                <p className="text-xs text-[#6F7787] mt-0.5">전체 상담 히스토리를 바탕으로 나만의 보고서를 생성합니다.</p>
               </div>
               <button
                 onClick={handleCreateReport}
-                disabled={isReportLoading}
-                className={`rounded-full px-6 py-3 text-sm font-semibold transition-all ${
-                  isReportLoading
+                disabled={isButtonDisabled}
+                className={`shrink-0 rounded-full px-6 py-2.5 text-sm font-semibold transition-all ${
+                  isButtonDisabled
                     ? "cursor-not-allowed bg-[#E5E2DC] text-[#6F7787]"
                     : "bg-[#1A1A2E] text-white hover:bg-[#0F0F1F] shadow-[0_4px_16px_rgba(35,40,56,0.15)]"
                 }`}
               >
-                {isReportLoading ? "보고서를 생성하고 있습니다..." : "보고서 생성하기"}
+                {isReportLoading ? "작성 중..." : reportGenerated ? "생성 완료" : "보고서 생성하기"}
               </button>
+              {reportError && <p className="text-xs text-[#DC3545] sm:col-span-2">{reportError}</p>}
             </div>
-            {reportError && <p className="mt-3 text-sm text-[#DC3545]">{reportError}</p>}
+
+            {/* 보고서 콘텐츠 */}
+            <div className="px-8 py-8">
+              {myReport ? (
+                <ReportCard title={`${currentName}님을 위한 보고서`} initial={currentInitial} report={myReport} />
+              ) : isReportLoading ? (
+                <div className="flex flex-col items-center gap-5 py-12">
+                  <div className="relative flex items-center justify-center">
+                    <div className="absolute w-16 h-16 rounded-full bg-[#E8C8C0]/30 animate-ping" />
+                    <div className="relative z-10 w-12 h-12 rounded-full bg-white shadow-[0_4px_16px_rgba(35,40,56,0.10)] flex items-center justify-center">
+                      <BrandMark size={22} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-[#1A1A2E]">보고서를 작성하고 있어요</p>
+                    <p className="text-xs text-[#6F7787] mt-1">AI가 상담 내용을 분석하고 있습니다</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[0, 0.18, 0.36].map((delay, i) => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-[#C88579] animate-bounce" style={{ animationDelay: `${delay}s` }} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-sm font-semibold text-[#1A1A2E]">아직 생성된 보고서가 없습니다.</p>
+                  <p className="mt-1.5 text-xs text-[#6F7787]">위 버튼을 눌러 AI 보고서를 생성해보세요.</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {report && report.length > 0 ? (
-            <div className="mb-8 space-y-5">
-              {report.map((item, index) => (
-                <ReportCard
-                  key={item.reportId}
-                  title={`${index === 0 ? currentName : partnerName}님을 위한 보고서`}
-                  initial={index === 0 ? currentInitial : partnerInitial}
-                  accentClassName={index === 0 ? "border-[#1A1A2E]" : "border-[#6F8197]"}
-                  report={item}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-[#D4D0E8] bg-white p-8 text-center">
-              <p className="text-base font-semibold text-[#1A1A2E]">아직 생성된 보고서가 없습니다.</p>
-              <p className="mt-2 text-sm text-[#6F7787]">
-                보고서 생성하기 버튼을 누르면 AI가 전체 상담 내용을 바탕으로 최종 보고서를 작성합니다.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 gap-4">
           <Link
             to="/"
-            className="py-4 border-2 border-[#E5E2DC] text-[#1A1A2E] rounded-full hover:bg-[#EFEDE7] transition-all flex items-center justify-center gap-2"
+            className="flex items-center justify-center gap-2 py-3.5 border-2 border-[#E5E2DC] text-[#1A1A2E] rounded-full hover:bg-[#EFEDE7] transition-all text-sm font-medium"
           >
-            <Home className="w-5 h-5" />
+            <Home className="w-4 h-4" />
             홈으로 돌아가기
           </Link>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -140,37 +198,39 @@ export default function MediationCompletePage() {
 function ReportCard({
   title,
   initial,
-  accentClassName,
   report,
 }: {
   title: string;
   initial: string;
-  accentClassName: string;
   report: MediationReportItem;
 }) {
-  const sections = [
-    { label: "나의 생각과 감정 정리", value: report.emotionSummary },
-    { label: "파트너 이해", value: report.partnerUnderstanding },
-    { label: "중재안", value: report.mediationPlans },
-    { label: "추천 대화법", value: report.recommendedDialogues },
-  ];
-
   return (
-    <section className={`rounded-xl border-l-4 bg-[#FAFAF7] p-5 ${accentClassName}`}>
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8C8C0] text-sm font-bold text-[#1A1A2E] ring-2 ring-[#1A1A2E]">
+    <div>
+      <div className="flex items-center gap-2.5 mb-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8C8C0] text-sm font-bold text-[#1A1A2E] ring-2 ring-[#1A1A2E]">
           {initial}
         </div>
         <h3 className="text-base font-semibold text-[#1A1A2E]">{title}</h3>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {sections.map((section) => (
-          <div key={section.label} className="rounded-xl border border-[#E5E2DC] bg-white p-4">
-            <p className="mb-2 text-sm font-semibold text-[#1A1A2E]">{section.label}</p>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#6F7787]">{section.value}</p>
+
+      <div className="space-y-4">
+        {SECTIONS.map(({ key, label, accent, bg }) => (
+          <div
+            key={key}
+            className="rounded-xl overflow-hidden border border-[#E5E2DC]"
+            style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
+          >
+            <div className="px-5 py-3" style={{ backgroundColor: bg }}>
+              <p className="text-xs font-semibold" style={{ color: accent }}>{label}</p>
+            </div>
+            <div className="px-5 py-4 bg-white">
+              <p className="text-sm leading-7 text-[#3A3A4E] whitespace-pre-wrap">
+                {report[key as keyof MediationReportItem] as string}
+              </p>
+            </div>
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

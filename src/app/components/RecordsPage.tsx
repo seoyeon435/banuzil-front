@@ -13,64 +13,6 @@ function displayName(value: unknown, fallback: string): string {
   return trimmed;
 }
 
-const MOCK_RECORDS = [
-  {
-    id: 1,
-    date: "2025.03.15",
-    temperature: 38,
-    status: "completed",
-    type: "가치관차이",
-    partnerInputDone: true,
-    aiMediated: true,
-    recoverySaved: true,
-    preview: "아나운서 준비 중 일본여행 제안으로 인한 갈등...",
-  },
-  {
-    id: 2,
-    date: "2025.04.08",
-    temperature: 62,
-    status: "in_progress",
-    type: "연락문제",
-    partnerInputDone: false,
-    aiMediated: false,
-    recoverySaved: false,
-    preview: "연락 빈도에 대한 의견 차이...",
-  },
-  {
-    id: 3,
-    date: "2025.02.28",
-    temperature: 45,
-    status: "completed",
-    type: "약속파기",
-    partnerInputDone: true,
-    aiMediated: true,
-    recoverySaved: false,
-    preview: "저녁 약속 취소에 대한 갈등...",
-  },
-  {
-    id: 4,
-    date: "2025.02.14",
-    temperature: 72,
-    status: "completed",
-    type: "데이트비용",
-    partnerInputDone: true,
-    aiMediated: true,
-    recoverySaved: true,
-    preview: "발렌타인데이 비용 분담 문제...",
-  },
-  {
-    id: 5,
-    date: "2025.01.20",
-    temperature: 55,
-    status: "completed",
-    type: "연락문제",
-    partnerInputDone: true,
-    aiMediated: true,
-    recoverySaved: true,
-    preview: "주말 연락 기대치 차이로 인한 갈등...",
-  },
-];
-
 // API 세션 → 화면 카드 형태로 변환
 function sessionToRecord(s: SewingSession, idx: number) {
   const isCompleted = s.status === "COMPLETED" || s.status === "completed";
@@ -94,7 +36,7 @@ function sessionToRecord(s: SewingSession, idx: number) {
   };
 }
 
-const conflictTypes = ["전체 유형", "연락문제", "가치관차이", "약속파기", "데이트비용"];
+const conflictTypes = ["전체 유형", "갈등 중재"];
 const periods = ["기간 선택", "최근 1개월", "최근 3개월", "최근 6개월"];
 
 export default function RecordsPage() {
@@ -148,14 +90,6 @@ export default function RecordsPage() {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
-
-  useEffect(() => {
-    console.log("[Records] 전체 sessions 개수", filtered.length);
-    console.log("[Records] currentPage", safeCurrentPage);
-    console.log("[Records] itemsPerPage", ITEMS_PER_PAGE);
-    console.log("[Records] totalPages", totalPages);
-    console.log("[Records] 현재 페이지에 표시되는 currentItems", currentItems);
-  }, [currentItems, filtered.length, safeCurrentPage, totalPages]);
 
   const moveToPage = (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);

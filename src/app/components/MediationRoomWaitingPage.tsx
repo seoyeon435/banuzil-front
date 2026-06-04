@@ -2,7 +2,6 @@ import { useNavigate } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { getSewingSessionList, isRealSewingSessionId, type SewingSession } from "../../api/sewingApi";
-import AuthDebugBadge from "./AuthDebugBadge";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
 function isPartnerJoined(session: SewingSession | undefined): boolean {
@@ -71,22 +70,9 @@ export default function MediationRoomWaitingPage() {
     };
   }, [checkPartnerJoined]);
 
-  const handleMockGoToInput = () => {
-    if (!isRealSewingSessionId(sessionId)) {
-      navigate("/mediation/start");
-      return;
-    }
-
-    sessionStorage.setItem("sewingSessionJoined", "mock");
-    sessionStorage.setItem("sewingDemoMode", "true");
-    console.log("[Sewing] mock 흐름: 생성자 대기 화면에서 입력 화면 이동", { sessionId });
-    navigate("/mediation/input");
-  };
-
   return (
     <>
       <MediationProgressHeader currentStep="input" />
-      <AuthDebugBadge />
 
       <div className="min-h-[calc(100vh-80px)] bg-[#FAFAF7] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[640px] bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(35,40,56,0.102)] text-center">
@@ -125,20 +111,6 @@ export default function MediationRoomWaitingPage() {
             {isChecking ? "확인 중..." : "상대방 입장 확인하기"}
           </button>
 
-          <button
-            onClick={handleMockGoToInput}
-            disabled={!isRealSewingSessionId(sessionId)}
-            className={`w-full h-14 rounded-full font-medium transition-all ${
-              isRealSewingSessionId(sessionId)
-                ? "bg-[#EFEDE7] text-[#1A1A2E] hover:bg-[#E5E2DC]"
-                : "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
-            }`}
-          >
-            시연용: 상대방 참여 완료 처리
-          </button>
-          <p className="text-xs text-[#6F7787] mt-3">
-            실제 API join 성공이 아니라 화면 시연용 mock 흐름입니다.
-          </p>
         </div>
       </div>
     </>

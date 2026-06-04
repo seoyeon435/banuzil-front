@@ -53,6 +53,8 @@ export interface CycleExploreResponse {
 export interface CycleDefineResponse {
   session_id: number;
   cycle_definition: string;
+  f_message?: string;
+  m_message?: string;
 }
 
 export interface CycleDefinitionResult {
@@ -102,7 +104,7 @@ function parseSessionId(data: unknown): number | null {
 
 export function isRealSewingSessionId(sessionId: unknown): sessionId is number {
   const parsed = typeof sessionId === "string" ? Number(sessionId) : sessionId;
-  return typeof parsed === "number" && Number.isFinite(parsed) && parsed > 0 && parsed !== 9999;
+  return typeof parsed === "number" && Number.isFinite(parsed) && parsed > 0;
 }
 
 export function getSewingErrorMessage(error: unknown): string {
@@ -164,7 +166,6 @@ export async function submitSewingRound(
   sessionId: number,
   round: number,
   content: string,
-  options?: { demoMode?: boolean }
 ): Promise<unknown> {
   const shouldCallRealApi = isRealSewingSessionId(sessionId);
   logAccessTokenPresence();
@@ -176,7 +177,7 @@ export async function submitSewingRound(
   }
 
   const url = `/api/sewings/${sessionId}/${round}`;
-  const body = options?.demoMode ? { content, demoMode: true, isDemo: true } : { content };
+  const body = { content };
   console.log("[Sewing] 라운드 저장 요청 URL", url);
   console.log("[Sewing] 라운드 저장 body", body);
 
@@ -199,12 +200,11 @@ export async function getCycleExploreQuestions(sessionId: number): Promise<Cycle
 
 export async function defineCycle(
   sessionId: number,
-  fExploreAnswer: string,
-  mExploreAnswer: string
+  answer: string
 ): Promise<CycleDefineResponse> {
   const response = await apiClient.post<CycleDefineResponse>(
     `/api/sewings/${sessionId}/cycle/define`,
-    { session_id: sessionId, f_explore_answer: fExploreAnswer, m_explore_answer: mExploreAnswer }
+    { answer }
   );
   return response.data;
 }
@@ -216,7 +216,12 @@ export async function getCycleDefinition(sessionId: number): Promise<CycleDefini
   return response.data;
 }
 
-// GET /api/sewings/{sessionId}/report — 백엔드가 GET 메서드, body 없음
+// POST /api/sewings/{sessionId}/generate-report — AI 서버에 보고서 생성 요청 (동기, 최대 60초)
+export async function triggerGenerateReport(sessionId: number): Promise<void> {
+  await apiClient.post(`/api/sewings/${sessionId}/generate-report`);
+}
+
+// GET /api/sewings/{sessionId}/report — 생성된 보고서 조회
 export async function createReport(sessionId: number): Promise<MediationReportItem[]> {
   const response = await apiClient.get<MediationReportItem[]>(
     `/api/sewings/${sessionId}/report`

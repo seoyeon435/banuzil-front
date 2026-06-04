@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import BrandMark from "./ui/BrandMark";
 import {
   AttachmentResult,
   getAttachmentLabel,
@@ -130,7 +131,7 @@ export default function AttachmentSurveyPage() {
             애착 유형 검사가 끝났어요.
           </p>
           <p className="text-[#6F7787] mb-8 leading-relaxed">
-            이제 바느질을 시작해보세요 🧵
+            이제 바느질을 시작해보세요
           </p>
           <div className="bg-[#E0F4E8] rounded-xl p-4 mb-8">
             <p className="text-sm text-[#5A9F7C] font-medium">
@@ -163,7 +164,7 @@ export default function AttachmentSurveyPage() {
       <div className="w-[420px] bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1F] p-8 flex flex-col text-white">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-3xl">🧵</span>
+            <BrandMark size={28} />
             <span className="text-2xl font-bold">바느질</span>
           </div>
         </div>

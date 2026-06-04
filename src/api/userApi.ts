@@ -309,6 +309,24 @@ export async function fetchFullUserProfile(): Promise<UserProfile | null> {
   }
 }
 
+// ── 마이페이지 통계 ─────────────────────────────────
+// GET /api/users/my-stats
+export interface MonthlyConflictCount {
+  month: string; // "2026-05" 형식
+  count: number;
+}
+
+export interface MyPageStats {
+  totalConflictCount: number;
+  agreementRate: number; // 0~100 (소수점 첫째 자리)
+  monthlyConflictCounts: MonthlyConflictCount[];
+}
+
+export async function fetchMyPageStats(): Promise<MyPageStats> {
+  const response = await apiClient.get<MyPageStats>("/api/users/my-stats");
+  return response.data;
+}
+
 // ── 회원탈퇴 ────────────────────────────────────────
 // DELETE /api/users/withdraw — soft delete (서버단). 성공 시 로컬 토큰도 삭제한다.
 export async function withdrawAccount(): Promise<void> {

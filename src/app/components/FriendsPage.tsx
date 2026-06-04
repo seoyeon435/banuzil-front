@@ -7,22 +7,6 @@ import { fetchFullUserProfile, type UserProfile } from "../../api/userApi";
 import { getAttachmentLabel } from "../../api/attachmentApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
 
-const recentConflicts = [
-  { id: 1, date: "2025.03.15", type: "가치관 차이", status: "completed", temp: 38 },
-  { id: 2, date: "2025.04.08", type: "연락 문제", status: "in_progress", temp: 62 },
-  { id: 3, date: "2025.02.28", type: "약속 파기", status: "completed", temp: 45 },
-];
-
-const repeatingPatterns = [
-  "힘들 때 말 못 하고 쌓아두다가 폭발하는 패턴",
-  "연락 속도 차이에서 오는 불안과 방어 반응",
-];
-
-const sharedPromises = [
-  "힘들 때 바로 말하기로 약속",
-  "시험 끝나고 짧은 여행 가기 합의",
-];
-
 // 연결 상태 단계
 // none → code_shown → partner_connecting → connected
 // 또는 none → input_code → connected
@@ -89,14 +73,6 @@ export default function FriendsPage() {
     navigator.clipboard.writeText(code).catch(() => {});
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
-  };
-
-  const handlePartnerConnect = () => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnecting(false);
-      setStep("connected");
-    }, 1200);
   };
 
   const handleInputConnect = async () => {
@@ -167,7 +143,6 @@ export default function FriendsPage() {
               <div className="w-full sm:flex-1 flex flex-col items-center gap-2">
                 <span className="text-3xl">💑</span>
                 <div className="w-full h-[2px] bg-gradient-to-r from-[#1A1A2E] to-[#6F8197] rounded-full" />
-                <p className="text-xs text-[#6F7787]">함께한 지 243일 · EFT 중재 {recentConflicts.length}회</p>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="w-16 h-16 rounded-full bg-[#E8C8C0] ring-2 ring-[#6F8197] flex items-center justify-center text-[#1A1A2E] text-2xl font-bold">
@@ -180,79 +155,15 @@ export default function FriendsPage() {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#EFEDE7] rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-[#1A1A2E]">3</p>
-                <p className="text-sm text-[#6F7787] mt-1">갈등 해결 완료</p>
-              </div>
-              <div className="bg-[#E0F4E8] rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-[#5A9F7C]">38°</p>
-                <p className="text-sm text-[#6F7787] mt-1">최근 갈등 온도</p>
-              </div>
-              <div className="bg-[#1A1A2E]/5 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-[#1A1A2E]">5</p>
-                <p className="text-sm text-[#6F7787] mt-1">회복 문장 저장됨</p>
-              </div>
-            </div>
           </div>
 
-          {/* 패턴 & 약속 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
-              <h3 className="font-semibold text-[#1A1A2E] mb-2">자주 반복되는 갈등 패턴</h3>
-              <p className="text-xs text-[#6F7787] mb-4">최근 우리 사이에서 반복된 감정 패턴을 확인해보세요.</p>
-              <div className="space-y-2">
-                {repeatingPatterns.map((p, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-[#1A1A2E]">
-                    <span className="text-[#1A1A2E] font-bold flex-shrink-0">↩</span>
-                    <span>{p}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
-              <h3 className="font-semibold text-[#1A1A2E] mb-2">둘만의 작은 약속</h3>
-              <p className="text-xs text-[#6F7787] mb-4">함께 정한 우리만의 규칙이에요.</p>
-              <div className="space-y-2">
-                {sharedPromises.map((p, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-[#1A1A2E]">
-                    <span className="text-[#5A9F7C] font-bold flex-shrink-0">✓</span>
-                    <span>{p}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 최근 갈등 기록 */}
+          {/* 갈등 기록 바로가기 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[#1A1A2E]">최근 갈등 기록</h2>
+              <h2 className="text-xl font-semibold text-[#1A1A2E]">갈등 기록</h2>
               <Link to="/mypage/records" className="text-sm text-[#1A1A2E] hover:text-[#0F0F1F] underline">
                 전체 보기 →
               </Link>
-            </div>
-            <div className="space-y-3">
-              {recentConflicts.map((record) => {
-                const isCompleted = record.status === "completed";
-                return (
-                  <div key={record.id} className="bg-white rounded-2xl p-5 shadow-[0_4px_16px_rgba(35,40,56,0.078)] flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl">{isCompleted ? "✅" : "🔄"}</span>
-                      <div>
-                        <p className="font-medium text-[#1A1A2E]">{record.type}</p>
-                        <p className="text-sm text-[#6F7787]">{record.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isCompleted ? "bg-[#E0F4E8] text-[#5A9F7C]" : "bg-[#EBE9F2] text-[#6F8197]"}`}>
-                        {isCompleted ? "AI 중재 완료" : `${partnerName}님 입장 대기`}
-                      </span>
-                      <span className="text-sm text-[#6F7787]">{record.temp}°</span>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
@@ -336,25 +247,6 @@ export default function FriendsPage() {
               </button>
             </div>
 
-            <div className="border-t border-[#E5E2DC] pt-6">
-              <p className="text-sm font-semibold text-[#1A1A2E] mb-1 text-center">시연용</p>
-              <p className="text-xs text-[#6F7787] mb-4 text-center">
-                실제 서비스에서는 상대방이 직접 코드를 입력합니다.
-              </p>
-              {isConnecting ? (
-                <div className="flex items-center justify-center gap-2 py-3">
-                  <div className="w-4 h-4 rounded-full bg-[#1A1A2E] animate-ping" />
-                  <span className="text-sm text-[#6F7787]">{fallbackPartnerName}님 연결 중...</span>
-                </div>
-              ) : (
-                <button
-                  onClick={handlePartnerConnect}
-                  className="w-full py-3 bg-[#EFEDE7] text-[#1A1A2E] rounded-full hover:bg-[#E5E2DC] transition-all font-medium border border-[#E5E2DC]"
-                >
-                  상대방 연결 시연하기
-                </button>
-              )}
-            </div>
           </div>
         )}
 
@@ -380,7 +272,6 @@ export default function FriendsPage() {
               </button>
             </div>
             {inputError && <p className="text-sm text-[#DC3545]">{inputError}</p>}
-            <p className="text-xs text-[#6F7787] mt-2">시연용: 아무 코드나 입력하면 연결됩니다.</p>
           </div>
         )}
 

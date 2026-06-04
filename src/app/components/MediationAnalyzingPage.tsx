@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useDisplayNames } from "../utils/useDisplayNames";
+import BrandMark from "./ui/BrandMark";
 
 export default function MediationAnalyzingPage() {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ export default function MediationAnalyzingPage() {
           <div className="absolute w-32 h-32 rounded-full bg-[#1A1A2E]/40 animate-ping" style={{ animationDuration: '2s' }} />
 
           {/* Icon */}
-          <div className="relative text-8xl z-10">🧵</div>
+          <div className="relative z-10"><BrandMark size={72} /></div>
         </div>
       </div>
 

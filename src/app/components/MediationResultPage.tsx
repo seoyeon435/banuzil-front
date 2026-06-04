@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import BrandMark from "./ui/BrandMark";
+import { useNavigate } from "react-router";
 import {
   getCurrentSewingRound,
   getCycleExploreQuestions,
@@ -39,9 +40,9 @@ interface CompletedRound {
   myAnswer: string;
   partnerAnswer: string;
   aiMessage: string;
+  isCycle?: boolean;
 }
 
-const DEMO_PARTNER_ANSWER = "시연 모드에서는 상대방 답변이 없어도 다음 라운드로 진행합니다.";
 const DEFAULT_AI_MESSAGE = "두 사람의 답변을 바탕으로 다음 질문을 준비하고 있어요.";
 
 const ROUND_FALLBACKS: Record<number, Pick<RoundViewModel, "title" | "question" | "guide" | "aiMessage">> = {
@@ -152,12 +153,6 @@ function sessionToRoundInfo(session: SewingSession | undefined): SewingRoundInfo
   };
 }
 
-function isRoundAdvanced(response: unknown): boolean {
-  if (!response || typeof response !== "object") return false;
-  const payload = response as Record<string, unknown>;
-  return Boolean(payload.nextRound || payload.currentRoundInfo || payload.round || payload.currentRound || payload.roundNumber);
-}
-
 function findAiResponseForRound(records: SessionRecord[], roundNumber: number, email?: string): string | null {
   const sameRoundRecords = records.filter((record) => record.roundNumber === roundNumber && record.aiResponse);
   const myRecord = sameRoundRecords.find((record) => email && record.email === email);
@@ -172,21 +167,8 @@ function findLatestPreviousAiResponse(records: SessionRecord[], currentRound: nu
   return myRecord?.aiResponse ?? previousRecords[0]?.aiResponse ?? null;
 }
 
-function useDemoMode(): boolean {
-  const [searchParams] = useSearchParams();
-  return useMemo(() => {
-    const paramEnabled = ["true", "1", "yes"].includes(
-      (searchParams.get("demoMode") ?? searchParams.get("isDemo") ?? "").toLowerCase(),
-    );
-    const storedEnabled = sessionStorage.getItem("sewingDemoMode") === "true";
-    const mockJoined = sessionStorage.getItem("sewingSessionJoined") === "mock";
-    return paramEnabled || storedEnabled || mockJoined;
-  }, [searchParams]);
-}
-
 export default function MediationResultPage() {
   const navigate = useNavigate();
-  const demoMode = useDemoMode();
   const { currentName, currentInitial, partnerName, partnerInitial } = useDisplayNames();
   const [roundInfo, setRoundInfo] = useState<RoundViewModel>(() => normalizeRoundInfo(null));
   const [phase, setPhase] = useState<RoundPhase>("input");
@@ -205,6 +187,9 @@ export default function MediationResultPage() {
   const [cycleDefinitionText, setCycleDefinitionText] = useState<string | null>(null);
   const [cycleFMessage, setCycleFMessage] = useState<string | null>(null);
   const [cycleMMessage, setCycleMMessage] = useState<string | null>(null);
+  const [savedCycleExploreQuestion, setSavedCycleExploreQuestion] = useState("");
+  const [savedCycleAnswer, setSavedCycleAnswer] = useState("");
+  const [showRiskModal, setShowRiskModal] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const submitInFlightRef = useRef(false);
   const cycleSubmittedRoundRef = useRef<number | null>(null);
@@ -267,18 +252,37 @@ export default function MediationResultPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [phase, completedRounds.length, roundInfo.roundNumber]);
 
-  const applyNextRound = useCallback((next: RoundViewModel, myAnswer: string, partnerAnswer?: string, aiMessageOverride?: string | null) => {
-    setCompletedRounds((prev) => [
-      ...prev,
-      {
+  const applyNextRound = useCallback((
+    next: RoundViewModel,
+    myAnswer: string,
+    partnerAnswer?: string,
+    aiMessageOverride?: string | null,
+    cycleData?: { question: string; answer: string; definition: string },
+  ) => {
+    setCompletedRounds((prev) => {
+      const roundEntry: CompletedRound = {
         roundNumber: roundInfo.roundNumber,
         title: roundInfo.title,
         question: roundInfo.question,
         myAnswer,
-        partnerAnswer: partnerAnswer || roundInfo.partnerAnswer || (demoMode ? DEMO_PARTNER_ANSWER : "상대방 답변을 기다리는 중입니다."),
+        partnerAnswer: partnerAnswer || roundInfo.partnerAnswer || "상대방 답변을 기다리는 중입니다.",
         aiMessage: aiMessageOverride || roundInfo.aiMessage || DEFAULT_AI_MESSAGE,
-      },
-    ]);
+      };
+      if (!cycleData) return [...prev, roundEntry];
+      return [
+        ...prev,
+        roundEntry,
+        {
+          roundNumber: -1,
+          title: "사이클 탐색",
+          question: cycleData.question,
+          myAnswer: cycleData.answer,
+          partnerAnswer: "",
+          aiMessage: cycleData.definition,
+          isCycle: true,
+        },
+      ];
+    });
     setRoundInfo(next);
     setPhase("input");
     setSavedMyInput("");
@@ -286,10 +290,10 @@ export default function MediationResultPage() {
     setErrorMsg("");
     setMyAiMessage(aiMessageOverride ?? null);
     setLastCheckedAt(new Date().toLocaleTimeString());
-  }, [demoMode, roundInfo]);
+  }, [roundInfo]);
 
   useEffect(() => {
-    if (phase !== "waiting_partner" || demoMode || !canUseRealApi) return;
+    if (phase !== "waiting_partner" || !canUseRealApi) return;
 
     const poll = async () => {
       try {
@@ -327,7 +331,8 @@ export default function MediationResultPage() {
         }
 
         // 사이클 제출 후 파트너 제출 대기 중이면 cycle definition 폴링
-        if (cycleDefinitionPollingRef.current && !cycleDefinitionText) {
+        // 대기 중에는 라운드 전진 조건을 절대 평가하지 않음
+        if (cycleDefinitionPollingRef.current) {
           try {
             const def = await getCycleDefinition(Number(sessionId));
             if (def.cycleDefinition) {
@@ -336,11 +341,11 @@ export default function MediationResultPage() {
               if (def.mMessage) setCycleMMessage(def.mMessage);
               cycleDefinitionPollingRef.current = false;
               setPhase("cycle_result");
-              return;
             }
           } catch {
             // 아직 생성 중이면 무시하고 다음 폴링 때 재시도
           }
+          return;
         }
 
         if (backendRound > roundInfo.roundNumber) {
@@ -355,18 +360,7 @@ export default function MediationResultPage() {
     void poll();
     const intervalId = window.setInterval(poll, 3000);
     return () => window.clearInterval(intervalId);
-  }, [phase, demoMode, canUseRealApi, myEmail, roundInfo.roundNumber, savedMyInput, sessionId, applyNextRound]);
-
-  const advanceInDemoMode = useCallback((content: string, response?: unknown) => {
-    const responseRound = isRoundAdvanced(response)
-      ? normalizeRoundInfo(response, roundInfo.roundNumber + 1)
-      : null;
-    const next =
-      responseRound && responseRound.roundNumber > roundInfo.roundNumber
-        ? responseRound
-        : normalizeRoundInfo({ roundNumber: roundInfo.roundNumber + 1 }, roundInfo.roundNumber + 1);
-    applyNextRound(next, content, DEMO_PARTNER_ANSWER);
-  }, [applyNextRound, roundInfo.roundNumber]);
+  }, [phase, canUseRealApi, myEmail, roundInfo.roundNumber, savedMyInput, sessionId, applyNextRound]);
 
   const handleSubmitMyAnswer = async () => {
     if (submitInFlightRef.current || myInput.trim().length === 0) return;
@@ -378,24 +372,21 @@ export default function MediationResultPage() {
 
     try {
       if (!canUseRealApi) {
-        if (demoMode) {
-          advanceInDemoMode(content);
-          return;
-        }
         throw new Error("중재 방 정보를 확인할 수 없어 답변을 저장할 수 없습니다.");
       }
 
-      const response = await submitSewingRound(Number(sessionId), roundInfo.roundNumber, content, { demoMode });
+      const response = await submitSewingRound(Number(sessionId), roundInfo.roundNumber, content);
 
-      if (demoMode) {
-        advanceInDemoMode(content, response);
-        return;
-      }
-
-      // 두 번째 제출자는 AiRoundAnalyzeResponse를 받음 — needsCycleDefinition 확인
+      // 두 번째 제출자는 AiRoundAnalyzeResponse를 받음 — needsCycleDefinition / riskFlag 확인
       const aiResp = (typeof response === "object" && response !== null)
         ? (response as AiRoundAnalyzeResponse)
         : null;
+
+      // 백엔드 @JsonNaming(SnakeCaseStrategy) 적용으로 risk_flag로 내려옴 — 두 케이스 모두 체크
+      const rawResp = response as Record<string, unknown>;
+      if (rawResp?.risk_flag === true || rawResp?.riskFlag === true) {
+        setShowRiskModal(true);
+      }
 
       if (aiResp?.needsCycleDefinition) {
         try {
@@ -415,9 +406,7 @@ export default function MediationResultPage() {
       setPhase("waiting_partner");
     } catch (error) {
       console.error("[API] 라운드 답변 저장 실패:", error);
-      if (demoMode) {
-        advanceInDemoMode(content);
-      } else if (error instanceof Error && error.message.includes("중재 방")) {
+      if (error instanceof Error && error.message.includes("중재 방")) {
         setErrorMsg(error.message);
       } else {
         setErrorMsg(getSewingErrorMessage(error));
@@ -434,12 +423,21 @@ export default function MediationResultPage() {
     if (cycleAnswer.trim().length === 0 || isCycleSubmitting) return;
     setIsCycleSubmitting(true);
     setErrorMsg("");
+
+    const answerText = cycleAnswer.trim();
+    const questionText = isFemale ? (cycleQuestions?.fQuestion ?? "") : (cycleQuestions?.mQuestion ?? "");
+
     try {
-      const fAnswer = isFemale ? cycleAnswer.trim() : "";
-      const mAnswer = !isFemale ? cycleAnswer.trim() : "";
-      await defineCycle(Number(sessionId), fAnswer, mAnswer);
+      const result = await defineCycle(Number(sessionId), answerText);
+      // 두번째 제출자는 응답에 f_message/m_message가 즉시 포함됨
+      const defResp = (result && typeof result === "object") ? result as { f_message?: string; m_message?: string } : null;
+      if (defResp?.f_message) setCycleFMessage(defResp.f_message);
+      if (defResp?.m_message) setCycleMMessage(defResp.m_message);
+
       cycleSubmittedRoundRef.current = roundInfo.roundNumber;
       cycleDefinitionPollingRef.current = true;
+      setSavedCycleExploreQuestion(questionText);
+      setSavedCycleAnswer(answerText);
       setCycleAnswer("");
       setCycleQuestions(null);
       setPhase("waiting_partner");
@@ -451,17 +449,37 @@ export default function MediationResultPage() {
   };
 
   const handleCycleDefinitionNext = useCallback(async () => {
-    const personalMsg = isFemale ? cycleFMessage : cycleMMessage;
+    const definition = cycleDefinitionText ?? "";
+    let personalMsg: string | null = isFemale ? cycleFMessage : cycleMMessage;
+
+    // GET /cycle/definition이 fMessage/mMessage를 null로 반환하는 경우
+    // records에서 content=""인 브릿지 레코드를 찾아 fallback
+    if (!personalMsg && canUseRealApi) {
+      try {
+        const records = await getSessionRecords(Number(sessionId));
+        const bridgeRecord = records.find((r) => r.content === "" && r.email === myEmail);
+        if (bridgeRecord?.aiResponse) personalMsg = bridgeRecord.aiResponse;
+      } catch {}
+    }
+
     setCycleDefinitionText(null);
     setCycleFMessage(null);
     setCycleMMessage(null);
+
+    const cycleData = (savedCycleExploreQuestion || savedCycleAnswer)
+      ? { question: savedCycleExploreQuestion, answer: savedCycleAnswer, definition }
+      : undefined;
+
+    setSavedCycleExploreQuestion("");
+    setSavedCycleAnswer("");
+
     try {
       const current = await getCurrentSewingRound(Number(sessionId));
-      applyNextRound(normalizeRoundInfo(current), savedMyInput, undefined, personalMsg);
+      applyNextRound(normalizeRoundInfo(current), savedMyInput, undefined, personalMsg, cycleData);
     } catch {
-      applyNextRound(normalizeRoundInfo(roundInfo.roundNumber + 1), savedMyInput, undefined, personalMsg);
+      applyNextRound(normalizeRoundInfo(roundInfo.roundNumber + 1), savedMyInput, undefined, personalMsg, cycleData);
     }
-  }, [isFemale, cycleFMessage, cycleMMessage, sessionId, savedMyInput, applyNextRound, roundInfo.roundNumber]);
+  }, [isFemale, cycleFMessage, cycleMMessage, cycleDefinitionText, sessionId, savedMyInput, applyNextRound, roundInfo.roundNumber, savedCycleExploreQuestion, savedCycleAnswer, canUseRealApi, myEmail]);
 
   const handleComplete = () => {
     navigate("/mediation/complete");
@@ -473,6 +491,46 @@ export default function MediationResultPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] flex min-w-0">
+      {showRiskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-[480px] bg-white rounded-2xl p-8 shadow-[0_16px_64px_rgba(0,0,0,0.25)]">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#DC3545]/10 mx-auto mb-5">
+              <span className="text-3xl">🚨</span>
+            </div>
+            <h2 className="text-xl font-semibold text-[#1A1A2E] text-center mb-2">
+              지금 괜찮으신가요?
+            </h2>
+            <p className="text-sm text-[#6F7787] text-center leading-relaxed mb-6">
+              작성하신 내용에서 걱정되는 표현이 감지되었어요.
+              <br />
+              힘드실 때는 혼자 견디지 않아도 돼요.
+              <br />
+              전문가의 도움을 받아보세요.
+            </p>
+            <div className="bg-[#FFF3F3] border border-[#DC3545]/20 rounded-xl p-4 space-y-2 mb-6">
+              <p className="text-sm font-semibold text-[#1A1A2E]">위기 상담 전화</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[#6F7787]">자살예방상담전화</span>
+                <a href="tel:1393" className="text-sm font-bold text-[#DC3545]">1393</a>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[#6F7787]">정신건강위기상담전화</span>
+                <a href="tel:15770199" className="text-sm font-bold text-[#DC3545]">1577-0199</a>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[#6F7787]">긴급전화</span>
+                <a href="tel:119" className="text-sm font-bold text-[#DC3545]">119</a>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowRiskModal(false)}
+              className="w-full py-3 bg-[#1A1A2E] text-white rounded-full font-medium hover:bg-[#0F0F1F] transition-all"
+            >
+              계속 상담하기
+            </button>
+          </div>
+        </div>
+      )}
       <aside className="hidden xl:flex w-[280px] bg-[#EFEDE7] p-6 flex-col flex-shrink-0">
         <h2 className="text-lg font-semibold text-[#1A1A2E] mb-5">중재 진행 상황</h2>
 
@@ -481,10 +539,12 @@ export default function MediationResultPage() {
             현재 {roundInfo.roundNumber}라운드
           </div>
           <div className="space-y-2">
-            {completedRounds.map((round) => (
-              <div key={round.roundNumber} className="flex items-center gap-2">
+            {completedRounds.map((round, i) => (
+              <div key={round.isCycle ? `cycle-${i}` : round.roundNumber} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-[#5A9F7C]" />
-                <span className="text-xs text-[#5A9F7C] line-through">{round.roundNumber}라운드 완료</span>
+                <span className="text-xs text-[#5A9F7C] line-through">
+                  {round.isCycle ? "사이클 탐색 완료" : `${round.roundNumber}라운드 완료`}
+                </span>
               </div>
             ))}
             <div className="flex items-center gap-2">
@@ -506,13 +566,6 @@ export default function MediationResultPage() {
             />
           </div>
         </div>
-
-        {demoMode && (
-          <div className="bg-[#EBE9F2] border border-[#D4D0E8] rounded-xl p-4 mb-5">
-            <p className="text-xs font-semibold text-[#1A1A2E] mb-1">Demo mode</p>
-            <p className="text-xs text-[#6F7787]">한 명의 답변만으로 다음 라운드 응답을 반영합니다.</p>
-          </div>
-        )}
 
         <div className="bg-white rounded-xl p-4 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
           <div className="space-y-3">
@@ -546,7 +599,7 @@ export default function MediationResultPage() {
         <div className="max-w-[760px] mx-auto space-y-6 min-w-0">
           <div className="bg-[#1A1A2E]/5 border-l-4 border-[#1A1A2E] rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">🧵</span>
+              <BrandMark size={22} />
               <span className="font-semibold text-[#1A1A2E]">바느질 AI</span>
             </div>
             <p className="text-[#1A1A2E] text-sm leading-relaxed">
@@ -554,30 +607,59 @@ export default function MediationResultPage() {
             </p>
           </div>
 
-          {completedRounds.map((round) => (
-            <section
-              key={round.roundNumber}
-              className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(35,40,56,0.06)] overflow-hidden border border-[#5A9F7C]/30"
-            >
-              <div className="bg-[#E0F4E8] px-4 sm:px-6 py-3 flex items-center gap-3">
-                <span className="font-semibold text-[#1A1A2E] text-sm">
-                  {round.roundNumber}라운드 · {round.title}
-                </span>
-                <span className="ml-auto text-[#5A9F7C] text-xs font-semibold">완료</span>
-              </div>
-              <div className="p-6 space-y-4">
-                <p className="text-sm text-[#6F7787]">
-                  <span className="font-medium text-[#1A1A2E]">질문: </span>
-                  {round.question}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <AnswerCard initial={currentInitial} title={`${currentName}의 답변`} answer={round.myAnswer} />
-                  <AnswerCard initial={partnerInitial} title={`${partnerName}의 답변`} answer={round.partnerAnswer} muted />
+          {completedRounds.map((round, i) =>
+            round.isCycle ? (
+              <section
+                key={`cycle-${i}`}
+                className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(35,40,56,0.06)] overflow-hidden border border-[#5A9F7C]/30"
+              >
+                <div className="bg-[#E0F4E8] px-4 sm:px-6 py-3 flex items-center gap-3">
+                  <span className="font-semibold text-[#1A1A2E] text-sm">사이클 탐색 · 관계 패턴 파악</span>
+                  <span className="ml-auto text-[#5A9F7C] text-xs font-semibold">완료</span>
                 </div>
-                <AiMessage message={round.aiMessage} />
-              </div>
-            </section>
-          ))}
+                <div className="p-6 space-y-4">
+                  {round.question && (
+                    <p className="text-sm text-[#6F7787]">
+                      <span className="font-medium text-[#1A1A2E]">탐색 질문: </span>
+                      {round.question}
+                    </p>
+                  )}
+                  {round.myAnswer && (
+                    <AnswerCard initial={currentInitial} title={`${currentName}의 답변`} answer={round.myAnswer} />
+                  )}
+                  {round.aiMessage && (
+                    <div className="bg-[#E0F4E8] border border-[#5A9F7C]/40 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-[#5A9F7C] mb-2">우리의 관계 사이클</p>
+                      <p className="text-sm text-[#1A1A2E] leading-relaxed whitespace-pre-wrap">{round.aiMessage}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            ) : (
+              <section
+                key={round.roundNumber}
+                className="bg-white rounded-2xl shadow-[0_4px_16px_rgba(35,40,56,0.06)] overflow-hidden border border-[#5A9F7C]/30"
+              >
+                <div className="bg-[#E0F4E8] px-4 sm:px-6 py-3 flex items-center gap-3">
+                  <span className="font-semibold text-[#1A1A2E] text-sm">
+                    {round.roundNumber}라운드 · {round.title}
+                  </span>
+                  <span className="ml-auto text-[#5A9F7C] text-xs font-semibold">완료</span>
+                </div>
+                <div className="p-6 space-y-4">
+                  <p className="text-sm text-[#6F7787]">
+                    <span className="font-medium text-[#1A1A2E]">질문: </span>
+                    {round.question}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <AnswerCard initial={currentInitial} title={`${currentName}의 답변`} answer={round.myAnswer} />
+                    <AnswerCard initial={partnerInitial} title={`${partnerName}의 답변`} answer={round.partnerAnswer} muted />
+                  </div>
+                  <AiMessage message={round.aiMessage} />
+                </div>
+              </section>
+            )
+          )}
 
           <section className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(35,40,56,0.102)] overflow-hidden">
             <div className="bg-[#1A1A2E]/10 px-4 sm:px-6 py-4 flex items-center gap-3 border-b border-[#1A1A2E]/20">

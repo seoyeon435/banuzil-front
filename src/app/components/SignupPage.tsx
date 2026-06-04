@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { Lock, User, Eye, EyeOff, Check, Venus, Mars, Mail } from "lucide-react";
 import { useState } from "react";
+import BrandMark from "./ui/BrandMark";
 import { getSignupErrorMessage, login, signup } from "../../api/userApi";
 
 export default function SignupPage() {
@@ -74,7 +75,7 @@ export default function SignupPage() {
         <div className="relative z-10 text-center px-12 max-w-md">
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-6">
-            <span className="text-5xl">🧵</span>
+            <BrandMark size={40} />
             <span className="text-4xl font-bold">바느질</span>
           </div>
 

@@ -114,12 +114,6 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Social Proof — 코랄 점 · 텍스트 · 더스티블루 점 */}
-          <div className="flex items-center justify-center gap-3 text-xs text-[#6F7787]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C88579]" />
-            <span className="tracking-tight">누적 베타 참여자 3,200명이 함께해요</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#6F8197]" />
-          </div>
         </div>
 
         {/* Scroll Indicator — 더스티블루, 조용하게 */}

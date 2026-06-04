@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { getSewingErrorMessage, getSewingSessionList, isRealSewingSessionId, joinSewingSession, type SewingSession } from "../../api/sewingApi";
-import AuthDebugBadge from "./AuthDebugBadge";
 
 function isJoinedSession(session: SewingSession | undefined): boolean {
   if (!session) return false;
@@ -62,7 +61,6 @@ export default function MediationJoinPage() {
   return (
     <>
       <MediationProgressHeader currentStep="input" />
-      <AuthDebugBadge />
 
       <div className="min-h-[calc(100vh-80px)] bg-[#FAFAF7] flex items-center justify-center py-12 px-6">
         <div className="w-full max-w-[560px] bg-white rounded-2xl p-10 shadow-[0_8px_32px_rgba(35,40,56,0.102)]">
