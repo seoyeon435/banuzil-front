@@ -359,6 +359,10 @@ export default function MediationResultPage() {
         }
 
         if (backendRound > roundInfo.roundNumber) {
+          if (roundInfo.roundNumber >= 12) {
+            navigate("/mediation/complete");
+            return;
+          }
           const next = normalizeRoundInfo(backendRound);
           applyNextRound(next, savedMyInput, undefined, currentRoundAiResponse);
         }
@@ -485,6 +489,11 @@ export default function MediationResultPage() {
 
     setSavedCycleExploreQuestion("");
     setSavedCycleAnswer("");
+
+    if (roundInfo.roundNumber >= 12) {
+      navigate("/mediation/complete");
+      return;
+    }
 
     try {
       const current = await getCurrentSewingRound(Number(sessionId));
