@@ -159,6 +159,11 @@ function findAiResponseForRound(records: SessionRecord[], roundNumber: number, e
   return myRecord?.aiResponse ?? sameRoundRecords[0]?.aiResponse ?? null;
 }
 
+// 위기 신호 감지 — AI가 risk 감지 시 응답에 자살예방상담 관련 표현을 포함함
+function containsRiskSignal(text: string): boolean {
+  return ["1393", "자살예방상담", "위기상담", "스스로를 해치"].some((s) => text.includes(s));
+}
+
 function findLatestPreviousAiResponse(records: SessionRecord[], currentRound: number, email?: string): string | null {
   const previousRecords = records
     .filter((record) => record.roundNumber < currentRound && record.aiResponse)
@@ -198,7 +203,6 @@ export default function MediationResultPage() {
   const sessionId = sessionStorage.getItem("sewingSessionId");
   const canUseRealApi = isRealSewingSessionId(sessionId);
   const myEmail = getStoredCurrentUser().email;
-  const temperature = Math.max(35, 78 - Math.max(0, roundInfo.roundNumber - 2) * 8);
   const currentAiMessage = myAiMessage ?? (isLoading ? "AI 중재 메시지를 불러오는 중입니다." : "아직 표시할 AI 중재 메시지가 없습니다.");
 
   const loadCurrentRound = useCallback(async () => {
@@ -306,6 +310,10 @@ export default function MediationResultPage() {
 
         if (currentRoundAiResponse) {
           setMyAiMessage(currentRoundAiResponse);
+          // 첫 번째 제출자는 risk_flag를 응답으로 못 받으므로 AI 메시지 내용으로 위기 신호 감지
+          if (containsRiskSignal(currentRoundAiResponse)) {
+            setShowRiskModal(true);
+          }
         }
 
         setLastCheckedAt(new Date().toLocaleTimeString());
@@ -501,9 +509,9 @@ export default function MediationResultPage() {
               지금 괜찮으신가요?
             </h2>
             <p className="text-sm text-[#6F7787] text-center leading-relaxed mb-6">
-              작성하신 내용에서 걱정되는 표현이 감지되었어요.
+              이번 상담 중 걱정되는 표현이 감지되었어요.
               <br />
-              힘드실 때는 혼자 견디지 않아도 돼요.
+              힘든 마음이 있다면 혼자 견디지 않아도 돼요.
               <br />
               전문가의 도움을 받아보세요.
             </p>
@@ -556,16 +564,6 @@ export default function MediationResultPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 mb-5 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
-          <p className="text-sm font-semibold text-[#1A1A2E] mb-2">갈등 온도</p>
-          <p className="text-2xl font-bold text-[#6F8197] mb-2">{temperature}°</p>
-          <div className="h-2 bg-gradient-to-r from-[#5A9F7C] via-[#6F8197] to-[#DC3545] rounded-full relative">
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#1A1A2E] rounded-full"
-              style={{ left: `${Math.min(95, temperature)}%` }}
-            />
-          </div>
-        </div>
 
         <div className="bg-white rounded-xl p-4 shadow-[0_4px_16px_rgba(35,40,56,0.078)]">
           <div className="space-y-3">

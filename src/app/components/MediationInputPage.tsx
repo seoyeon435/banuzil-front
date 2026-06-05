@@ -27,7 +27,7 @@ function getRoundSaveState(session: SewingSession | undefined, localSaved: boole
   const backendRound = typeof session?.currentRound === "number" ? session.currentRound : 0;
   const explicitMine = readBooleanField(session, ["mySubmitted", "myInputDone", "initiatorSubmitted", "creatorSubmitted", "meSubmitted"]);
   const explicitPartner = readBooleanField(session, ["partnerSubmitted", "partnerInputDone", "participantSubmitted", "opponentSubmitted"]);
-  const bothByStatus = ["BOTH_SUBMITTED", "READY_FOR_ANALYSIS", "ANALYZING", "COMPLETED", "DONE"].includes(status);
+  const bothByStatus = ["BOTH_SUBMITTED", "READY_FOR_ANALYSIS", "ANALYZING", "COMPLETED"].includes(status);
   const bothByRound = backendRound > submittedRound;
 
   return {

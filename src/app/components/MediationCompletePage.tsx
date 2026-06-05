@@ -5,7 +5,7 @@ import { Home, CheckCircle } from "lucide-react";
 import MediationProgressHeader from "./MediationProgressHeader";
 import { useDisplayNames } from "../utils/useDisplayNames";
 import BrandMark from "./ui/BrandMark";
-import { createReport, triggerGenerateReport, isRealSewingSessionId, type MediationReportItem } from "../../api/sewingApi";
+import { createReport, triggerGenerateReport, isRealSewingSessionId, submitFeedback, type MediationReportItem } from "../../api/sewingApi";
 import { getStoredCurrentUser } from "../../api/userApi";
 
 const SECTIONS = [
@@ -25,6 +25,12 @@ export default function MediationCompletePage() {
   const [reportGenerated, setReportGenerated] = useState(false);
   const [reportError, setReportError] = useState("");
   const pollIntervalRef = useRef<number | null>(null);
+
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
 
   useEffect(() => {
     return () => {
@@ -88,6 +94,24 @@ export default function MediationCompletePage() {
 
     if (!resolved) {
       pollIntervalRef.current = window.setInterval(fetchReport, 3000);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    if (!isRealSewingSessionId(sessionId)) {
+      setFeedbackError("세션 정보를 찾을 수 없어요.");
+      return;
+    }
+    setFeedbackSubmitting(true);
+    setFeedbackError("");
+    try {
+      await submitFeedback(Number(sessionId), feedbackRating, feedbackComment);
+      setFeedbackSubmitted(true);
+    } catch {
+      setFeedbackError("피드백 제출에 실패했어요. 잠시 뒤 다시 시도해주세요.");
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -178,6 +202,64 @@ export default function MediationCompletePage() {
                   <p className="text-sm font-semibold text-[#1A1A2E]">아직 생성된 보고서가 없습니다.</p>
                   <p className="mt-1.5 text-xs text-[#6F7787]">위 버튼을 눌러 AI 보고서를 생성해보세요.</p>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* 피드백 영역 */}
+          <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(35,40,56,0.10)] mb-8 overflow-hidden">
+            <div className="px-8 pt-7 pb-5 border-b border-[#E5E2DC]">
+              <h2 className="text-xl font-semibold text-[#1A1A2E]">서비스 피드백</h2>
+              <p className="text-sm text-[#6F7787] mt-1">banuzil 이용 경험을 알려주세요.</p>
+            </div>
+            <div className="px-8 py-8">
+              {feedbackSubmitted ? (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <CheckCircle className="w-10 h-10 text-[#5A9F7C]" />
+                  <p className="font-semibold text-[#1A1A2E]">피드백이 제출되었습니다</p>
+                  <p className="text-sm text-[#6F7787]">소중한 의견 감사합니다.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <p className="text-sm font-semibold text-[#1A1A2E] mb-3">만족도</p>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setFeedbackRating(star)}
+                          className={`text-4xl transition-transform hover:scale-110 leading-none ${
+                            star <= feedbackRating ? "text-[#C88579]" : "text-[#E5E2DC]"
+                          }`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-5">
+                    <p className="text-sm font-semibold text-[#1A1A2E] mb-2">의견 <span className="font-normal text-[#6F7787]">(선택)</span></p>
+                    <textarea
+                      value={feedbackComment}
+                      onChange={(e) => setFeedbackComment(e.target.value)}
+                      placeholder="서비스 이용 중 느낀 점을 자유롭게 작성해주세요."
+                      rows={4}
+                      className="w-full px-4 py-3 bg-[#FAFAF7] border border-[#E5E2DC] rounded-xl text-sm text-[#1A1A2E] placeholder:text-[#6F7787] focus:outline-none focus:border-[#1A1A2E] resize-none"
+                    />
+                  </div>
+                  {feedbackError && <p className="text-xs text-[#DC3545] mb-3">{feedbackError}</p>}
+                  <button
+                    onClick={handleSubmitFeedback}
+                    disabled={feedbackSubmitting || feedbackRating === 0}
+                    className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-all ${
+                      feedbackSubmitting || feedbackRating === 0
+                        ? "bg-[#E5E2DC] text-[#6F7787] cursor-not-allowed"
+                        : "bg-[#1A1A2E] text-white hover:bg-[#0F0F1F] shadow-[0_4px_16px_rgba(35,40,56,0.15)]"
+                    }`}
+                  >
+                    {feedbackSubmitting ? "제출 중..." : "피드백 제출하기"}
+                  </button>
+                </>
               )}
             </div>
           </div>

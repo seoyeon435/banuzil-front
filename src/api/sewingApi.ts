@@ -292,3 +292,9 @@ export async function getSessionRecords(sessionId: number): Promise<SessionRecor
   console.log("[Sewing] records 조회 응답", response.data);
   return response.data as SessionRecord[];
 }
+
+// ── 6. 피드백 제출 ──────────────────────────────────
+// POST /api/feedbacks/{sessionId}
+export async function submitFeedback(sessionId: number, rating: number, comment: string): Promise<void> {
+  await apiClient.post(`/api/feedbacks/${sessionId}`, { rating, comment });
+}
