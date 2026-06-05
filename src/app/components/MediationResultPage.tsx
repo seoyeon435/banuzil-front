@@ -595,15 +595,6 @@ export default function MediationResultPage() {
 
       <main className="flex-1 min-w-0 p-4 sm:p-6 xl:p-8 overflow-y-auto">
         <div className="max-w-[760px] mx-auto space-y-6 min-w-0">
-          <div className="bg-[#1A1A2E]/5 border-l-4 border-[#1A1A2E] rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <BrandMark size={22} />
-              <span className="font-semibold text-[#1A1A2E]">바느질 AI</span>
-            </div>
-            <p className="text-[#1A1A2E] text-sm leading-relaxed">
-              라운드 개수는 고정하지 않고, 백엔드가 내려주는 현재 라운드 데이터를 기준으로 질문과 안내를 갱신합니다.
-            </p>
-          </div>
 
           {completedRounds.map((round, i) =>
             round.isCycle ? (

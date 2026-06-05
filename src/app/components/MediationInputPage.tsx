@@ -10,6 +10,8 @@ import {
   type SewingSession,
 } from "../../api/sewingApi";
 import { useDisplayNames } from "../utils/useDisplayNames";
+import { fetchFullUserProfile } from "../../api/userApi";
+import { getAttachmentLabel } from "../../api/attachmentApi";
 
 type InputPhase = "writing" | "waiting_partner";
 
@@ -49,6 +51,7 @@ export default function MediationInputPage() {
   const [isRoundSaved, setIsRoundSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
+  const [myAttachmentLabel, setMyAttachmentLabel] = useState("");
   const submitInFlightRef = useRef(false);
   const hasNavigatedRef = useRef(false);
 
@@ -58,6 +61,14 @@ export default function MediationInputPage() {
     getCurrentSewingRound(Number(sessionId))
       .then((round) => { if (round > 0) setCurrentRound(round); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    void fetchFullUserProfile().then((profile) => {
+      if (profile?.attachmentType) {
+        setMyAttachmentLabel(getAttachmentLabel(profile.attachmentType));
+      }
+    });
   }, []);
 
   const checkBothInputsSaved = useCallback(async (localSaved = isRoundSaved) => {
@@ -253,7 +264,7 @@ export default function MediationInputPage() {
           </div>
           <div>
             <p className="text-[#1A1A2E] font-medium">나 ({currentName})</p>
-            <span className="text-xs text-[#6F7787]">안정형 애착</span>
+            {myAttachmentLabel && <span className="text-xs text-[#6F7787]">{myAttachmentLabel}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2 mb-8 ml-2">
