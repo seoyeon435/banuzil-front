@@ -33,6 +33,22 @@ export default function MediationCompletePage() {
   const [feedbackError, setFeedbackError] = useState("");
 
   useEffect(() => {
+    const sessionId = sessionStorage.getItem("sewingSessionId");
+    if (!isRealSewingSessionId(sessionId)) return;
+
+    // 페이지 진입 시 기존 보고서 자동 조회
+    void (async () => {
+      try {
+        const existing = await createReport(Number(sessionId));
+        if (existing.length > 0) {
+          setReport(existing);
+          setReportGenerated(true);
+        }
+      } catch {
+        // 기존 보고서 없으면 무시 — 사용자가 직접 생성
+      }
+    })();
+
     return () => {
       if (pollIntervalRef.current !== null) clearInterval(pollIntervalRef.current);
     };
