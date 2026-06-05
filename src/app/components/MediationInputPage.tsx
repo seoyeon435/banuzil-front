@@ -52,6 +52,7 @@ export default function MediationInputPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
   const [myAttachmentLabel, setMyAttachmentLabel] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const submitInFlightRef = useRef(false);
   const hasNavigatedRef = useRef(false);
 
@@ -144,11 +145,12 @@ export default function MediationInputPage() {
 
   const handleSubmit = async () => {
     if (submitInFlightRef.current) return;
-    if (input.trim().length === 0) return;
+    const currentValue = inputRef.current?.value ?? input;
+    if (currentValue.trim().length === 0) return;
     submitInFlightRef.current = true;
     setIsSubmitting(true);
 
-    const content = input.trim();
+    const content = currentValue.trim();
     setSubmittedInput(content);
     setErrorMsg("");
 
@@ -324,6 +326,7 @@ export default function MediationInputPage() {
           {/* 입력창 */}
           <div className="flex-1 flex flex-col mb-6">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="상대방이 어떤 행동을 했는지,&#10;그때 어떤 감정이 들었는지,&#10;무엇을 원하는지 자유롭게 써주세요."

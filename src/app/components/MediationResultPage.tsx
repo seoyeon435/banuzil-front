@@ -196,6 +196,8 @@ export default function MediationResultPage() {
   const [savedCycleAnswer, setSavedCycleAnswer] = useState("");
   const [showRiskModal, setShowRiskModal] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const myInputRef = useRef<HTMLTextAreaElement>(null);
+  const cycleAnswerRef = useRef<HTMLTextAreaElement>(null);
   const submitInFlightRef = useRef(false);
   const cycleSubmittedRoundRef = useRef<number | null>(null);
   const cycleDefinitionPollingRef = useRef(false);
@@ -371,12 +373,14 @@ export default function MediationResultPage() {
   }, [phase, canUseRealApi, myEmail, roundInfo.roundNumber, savedMyInput, sessionId, applyNextRound]);
 
   const handleSubmitMyAnswer = async () => {
-    if (submitInFlightRef.current || myInput.trim().length === 0) return;
+    // DOM 값을 직접 읽어 한국어 IME 조합 중 마지막 글자 유실 방지
+    const currentValue = myInputRef.current?.value ?? myInput;
+    if (submitInFlightRef.current || currentValue.trim().length === 0) return;
     submitInFlightRef.current = true;
     setIsSubmitting(true);
     setErrorMsg("");
 
-    const content = myInput.trim();
+    const content = currentValue.trim();
 
     try {
       if (!canUseRealApi) {
@@ -428,11 +432,12 @@ export default function MediationResultPage() {
   const isFemale = /female|여성|여/i.test(myGender);
 
   const handleCycleSubmit = async () => {
-    if (cycleAnswer.trim().length === 0 || isCycleSubmitting) return;
+    const currentCycleValue = cycleAnswerRef.current?.value ?? cycleAnswer;
+    if (currentCycleValue.trim().length === 0 || isCycleSubmitting) return;
     setIsCycleSubmitting(true);
     setErrorMsg("");
 
-    const answerText = cycleAnswer.trim();
+    const answerText = currentCycleValue.trim();
     const questionText = isFemale ? (cycleQuestions?.fQuestion ?? "") : (cycleQuestions?.mQuestion ?? "");
 
     try {
@@ -693,6 +698,7 @@ export default function MediationResultPage() {
                     두 분의 관계 패턴을 더 잘 이해하기 위한 질문이에요. 솔직하게 답변해 주세요.
                   </p>
                   <textarea
+                    ref={cycleAnswerRef}
                     value={cycleAnswer}
                     onChange={(e) => setCycleAnswer(e.target.value)}
                     placeholder="질문에 대한 답변을 입력해주세요."
@@ -733,6 +739,7 @@ export default function MediationResultPage() {
                     {currentName}의 답변을 입력해주세요
                   </p>
                   <textarea
+                    ref={myInputRef}
                     value={myInput}
                     onChange={(event) => setMyInput(event.target.value)}
                     placeholder="AI 중재 메시지를 읽고 지금 드는 생각을 적어주세요."

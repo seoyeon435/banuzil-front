@@ -208,19 +208,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* 테스트 계정 */}
-          <div className="mt-8 pt-8 border-t border-[#E5E2DC]">
-            <button
-              onClick={handleTestLogin}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-[#EBE9F2] text-[#1A1A2E] rounded-full hover:bg-[#DCD8EC] transition-all text-center font-medium"
-            >
-              <BrandMark size={14} />
-              <span>테스트 계정으로 바로 입장하기</span>
-            </button>
-            <p className="text-xs text-[#6F7787] text-center mt-3">
-              개발 테스트용 · 실제 토큰으로 홈으로 이동
-            </p>
-          </div>
         </div>
       </div>
     </div>
