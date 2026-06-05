@@ -264,7 +264,6 @@ export default function AttachmentSurveyPage() {
                   </div>
                   <p className="text-[#1A1A2E] leading-relaxed flex-1">
                     {question.text}
-                    {question.reverse && <span className="text-[#6F7787] text-sm ml-2">(역문항)</span>}
                   </p>
                 </div>
 
