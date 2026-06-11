@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import BrandMark from "./ui/BrandMark";
 import { useNavigate } from "react-router";
 import {
   getCurrentSewingRound,
@@ -316,6 +315,11 @@ export default function MediationResultPage() {
           if (containsRiskSignal(currentRoundAiResponse)) {
             setShowRiskModal(true);
           }
+          // 12라운드: AI 응답 도착 = 상대방도 제출 완료 → 보고서 페이지로 이동
+          if (roundInfo.roundNumber >= 12) {
+            navigate("/mediation/complete");
+            return;
+          }
         }
 
         setLastCheckedAt(new Date().toLocaleTimeString());
@@ -415,6 +419,12 @@ export default function MediationResultPage() {
         } catch {
           // cycle/explore 실패 시 waiting_partner로 fallback
         }
+      }
+
+      // 12라운드 완료: 두 번째 제출자는 바로 보고서 페이지로 이동
+      if (roundInfo.roundNumber >= 12) {
+        navigate("/mediation/complete");
+        return;
       }
 
       setSavedMyInput(content);
@@ -797,7 +807,7 @@ export default function MediationResultPage() {
                 onClick={handleComplete}
                 className="w-full py-2.5 border-2 border-[#6F8197] text-[#6F8197] rounded-full hover:bg-[#EBE9F2] transition-all text-sm font-medium"
               >
-                여기까지 정리하고 결과 보기
+                {roundInfo.roundNumber >= 12 ? "완료" : "여기까지 정리하고 결과 보기"}
               </button>
             </div>
           </section>
